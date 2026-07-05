@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Danh Mục Đầu Tư Google Drive V13</title>
+    <title>Quản Lý Danh Mục Đầu Tư Google Drive V14</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
     <style>
@@ -120,8 +120,8 @@
         </div>
 
         <div id="tab-muaban" class="tab-content">
-            <div class="card">
-                <h2>Nhập Tài Sản Mới (Mua vào)</h2>
+            <div class="card" id="assetFormCard">
+                <h2 id="formTitle">Nhập Tài Sản Mới (Mua vào)</h2>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-group">
                         <label>Loại tài sản</label>
@@ -152,11 +152,11 @@
                     <label>Ngày giao dịch (Bỏ trống = Ngày hôm nay)</label>
                     <input type="date" id="assetDate">
                 </div>
-                <button class="btn-block" onclick="addAsset()">Thêm / Lưu Tài Sản Vào Bộ Nhớ Tạm</button>
+                <button class="btn-block" id="submitAssetBtn" onclick="addAsset()">Thêm / Lưu Tài Sản Vào Bộ Nhớ Tạm</button>
             </div>
 
             <div class="card">
-                <h2>Danh Sách Giao Dịch Hiện Tại</h2>
+                <h2>Danh Sách Giao Dịch Hiện Tại (Ngày mới nhất xếp đầu)</h2>
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -167,8 +167,7 @@
                                 <th>Số lượng</th>
                                 <th>Giá mua/Đơn vị</th>
                                 <th>Tổng mua</th>
-                                <th>Hành động</th>
-                            </tr>
+                                <th>Hành động</th> </tr>
                         </thead>
                         <tbody id="tradeLogTable"></tbody>
                     </table>
@@ -245,6 +244,7 @@
     
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
     let db = []; let tokenClient; let gapiInited = false; let gisiInited = false; let targetFileId = null;
+    let editingId = null; // Biến toàn cục mới: Dùng để theo dõi id giao dịch nào đang được sửa
     const FILE_NAME = "Sổ_Gốc_Đầu_Tư_Đám_Mây.csv";
 
     function checkPassword() {
@@ -288,7 +288,6 @@
         } catch (err) { document.getElementById('driveStatus').innerText = "Lỗi quét file: " + err.message; }
     }
 
-    // 📥 HÀM NẠP FILE THÔNG MINH (ĐÃ SỬA LỖI ĐỒNG BỘ VÀ LỆCH CỘT)
     async function loadFromDrive() {
         if (!targetFileId) { alert("Chưa thấy tệp dữ liệu nào trên đám mây thưa bác!"); return; }
         try {
@@ -301,31 +300,21 @@
                 let line = lines[i].trim(); if (!line || line.startsWith(',')) break; 
                 let cols = line.split(',').map(c => c.replace(/^"|"$/g, ''));
                 
-                let type = cols[0]; 
-                let brand = cols[1]; 
-                let date = cols[2]; 
-                let qty = parseFloat(cols[3]); 
-                let buyPrice = 0;
-                let currentPrice = 0;
+                let type = cols[0]; let brand = cols[1]; let date = cols[2]; let qty = parseFloat(cols[3]); 
+                let buyPrice = 0; let currentPrice = 0;
 
-                // THUẬT TOÁN KIỂM TRA Đếm Số Cột để tránh lỗi lệch cấu trúc file cũ và mới
                 if (cols.length === 8) {
-                    // Cấu trúc file bản cũ: lấy tổng tiền chia ngược ra giá đơn vị
-                    let totalBuyOld = parseFloat(cols[4]);
-                    currentPrice = parseFloat(cols[5]);
+                    let totalBuyOld = parseFloat(cols[4]); currentPrice = parseFloat(cols[5]);
                     buyPrice = qty > 0 ? totalBuyOld / qty : 0;
                 } else if (cols.length >= 9) {
-                    // Cấu trúc file bản mới: đọc trực tiếp cột đơn giá
-                    buyPrice = parseFloat(cols[4]);
-                    currentPrice = parseFloat(cols[6]);
+                    buyPrice = parseFloat(cols[4]); currentPrice = parseFloat(cols[6]);
                 }
 
                 if (type && brand && !isNaN(qty)) {
                     importedDb.push({ id: Date.now() + i, type: type, brand: brand, date: date, qty: qty, buyPrice: buyPrice, currentPrice: isNaN(currentPrice) ? buyPrice : currentPrice });
                 }
             }
-            db = importedDb; 
-            refreshAllTabs(); // Chạy lệnh nạp giao diện an toàn
+            db = importedDb; editingId = null; resetFormState(); refreshAllTabs();
             document.getElementById('driveStatus').innerText = `Trạng thái: Đã tải thành công bản dữ liệu gốc về app thưa bác!`;
         } catch (err) { alert("Lỗi nạp file: " + err.message); }
     }
@@ -385,30 +374,104 @@
         uniqueBrands.forEach(brand => { const option = document.createElement('option'); option.value = brand; datalist.appendChild(option); });
     }
 
+    // 🔧 HÀM LƯU TÀI SẢN: ĐÃ NÂNG CẤP XỬ LÝ ĐỒNG THỜI CẢ THÊM MỚI VÀ SỬA ĐỔI GIAO DỊCH
     function addAsset() {
         const type = document.getElementById('assetType').value;
         const brand = document.getElementById('assetBrand').value.trim().toUpperCase();
         const qty = parseFloat(document.getElementById('assetQty').value);
         const buyPrice = parseFloat(document.getElementById('assetBuyPrice').value);
         let date = document.getElementById('assetDate').value;
+        
         if(!brand || isNaN(qty) || isNaN(buyPrice) || qty <= 0 || buyPrice <= 0) { alert("Bác nhập đủ thông tin hợp lệ ạ!"); return; }
         if(!date) { const today = new Date(); date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`; }
-        const existingAsset = db.find(item => item.type === type && item.brand === brand);
-        db.push({ id: Date.now(), type: type, brand: brand, date: date, qty: qty, buyPrice: buyPrice, currentPrice: existingAsset ? existingAsset.currentPrice : buyPrice });
+
+        if (editingId !== null) {
+            // CHẾ ĐỘ SỬA: Tìm và ghi đè số liệu trực tiếp vào bản ghi cũ
+            const item = db.find(i => i.id === editingId);
+            if (item) {
+                item.type = type;
+                item.brand = brand;
+                item.qty = qty;
+                item.buyPrice = buyPrice;
+                item.date = date;
+            }
+            editingId = null;
+            resetFormState();
+            alert("Đã cập nhật thay đổi giao dịch thành công thưa bác! Bác nhớ ấn nút số 3 để đồng bộ lên mây nhé.");
+        } else {
+            // CHẾ ĐỘ THÊM MỚI: Thêm bản ghi mới vào mảng
+            const existingAsset = db.find(item => item.type === type && item.brand === brand);
+            db.push({ id: Date.now(), type: type, brand: brand, date: date, qty: qty, buyPrice: buyPrice, currentPrice: existingAsset ? existingAsset.currentPrice : buyPrice });
+            resetFormState();
+            alert("Đã lưu tạm vào máy, bác lưu ý ấn nút số 3 để đồng bộ lên mây nhé bác!");
+        }
+
         renderTradeLog(); updateBrandSuggestions();
-        document.getElementById('assetBrand').value = ''; document.getElementById('assetQty').value = ''; document.getElementById('assetBuyPrice').value = ''; document.getElementById('assetDate').value = '';
-        alert("Đã lưu tạm vào máy, bác lưu ý ấn nút số 3 để đồng bộ lên mây nhé bác!");
     }
 
-    function deleteAsset(id) { if(confirm("Bác chắc chắn muốn xóa không?")) { db = db.filter(item => item.id !== id); renderTradeLog(); updateBrandSuggestions(); } }
+    // MỚI THÊM: Kích hoạt chế độ sửa khi bác click vào nút "Sửa"
+    function editAsset(id) {
+        const item = db.find(i => i.id === id);
+        if (!item) return;
 
+        editingId = id; // Ghi nhận ID đang thực hiện sửa đổi
+        
+        // Đẩy toàn bộ dữ liệu ngược lại lên form nhập liệu
+        document.getElementById('assetType').value = item.type;
+        document.getElementById('assetBrand').value = item.brand;
+        document.getElementById('assetQty').value = item.qty;
+        document.getElementById('assetBuyPrice').value = item.buyPrice;
+        document.getElementById('assetDate').value = item.date;
+
+        // Thay đổi giao diện biểu mẫu sang trạng thái "Sửa"
+        document.getElementById('formTitle').innerText = "🔧 Đang Chỉnh Sửa Giao Dịch";
+        const submitBtn = document.getElementById('submitAssetBtn');
+        submitBtn.innerText = "🔧 Cập Nhật Thay Đổi (Sửa)";
+        submitBtn.style.backgroundColor = "var(--warning)";
+
+        // Tự động cuộn trang lên khung form một cách mượt mà trên màn hình S25 Ultra
+        document.getElementById('assetFormCard').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // MỚI THÊM: Đưa biểu mẫu trở lại trạng thái nhập liệu bình thường
+    function resetFormState() {
+        document.getElementById('formTitle').innerText = "Nhập Tài Sản Mới (Mua vào)";
+        const submitBtn = document.getElementById('submitAssetBtn');
+        submitBtn.innerText = "Thêm / Lưu Tài Sản Vào Bộ Nhớ Tạm";
+        submitBtn.style.backgroundColor = "var(--primary)";
+        
+        document.getElementById('assetBrand').value = ''; 
+        document.getElementById('assetQty').value = ''; 
+        document.getElementById('assetBuyPrice').value = ''; 
+        document.getElementById('assetDate').value = '';
+    }
+
+    function deleteAsset(id) { 
+        if(confirm("Bác chắc chắn muốn xóa không?")) { 
+            db = db.filter(item => item.id !== id); 
+            if(editingId === id) { editingId = null; resetFormState(); }
+            renderTradeLog(); updateBrandSuggestions(); 
+        } 
+    }
+
+    // 🔧 HÀM RENDER: Bổ sung thêm nút "Sửa" màu xanh dương bên cạnh nút "Xóa"
     function renderTradeLog() {
         const tbody = document.getElementById('tradeLogTable'); tbody.innerHTML = '';
         if(db.length === 0) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#64748b;">Chưa có dữ liệu nào.</td></tr>'; return; }
         let sortedDb = [...db].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
         sortedDb.forEach(item => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td><span class="${getBadgeClass(item.type)}">${item.type}</span></td><td style="font-weight:bold;">${item.brand}</td><td>${formatDateDisplay(item.date)}</td><td>${item.qty}</td><td>${formatCurrency(item.buyPrice)}</td><td style="font-weight:500;">${formatCurrency(item.qty * item.buyPrice)}</td><td><button style="background:var(--danger); padding:4px 8px; font-size:0.8rem;" onclick="deleteAsset(${item.id})">Xóa</button></td>`;
+            tr.innerHTML = `
+                <td><span class="${getBadgeClass(item.type)}">${item.type}</span></td>
+                <td style="font-weight:bold;">${item.brand}</td>
+                <td>${formatDateDisplay(item.date)}</td>
+                <td>${item.qty}</td>
+                <td>${formatCurrency(item.buyPrice)}</td>
+                <td style="font-weight:500;">${formatCurrency(item.qty * item.buyPrice)}</td>
+                <td>
+                    <button style="background:var(--primary); padding:4px 8px; font-size:0.8rem; margin-right:4px;" onclick="editAsset(${item.id})">Sửa</button>
+                    <button style="background:var(--danger); padding:4px 8px; font-size:0.8rem;" onclick="deleteAsset(${item.id})">Xóa</button>
+                </td>`;
             tbody.appendChild(tr);
         });
     }
@@ -450,7 +513,6 @@
         brandTbody.appendChild(totalTr);
     }
 
-    // 🔧 HÀM ĐÃ SỬA LỖI APPENDCHILD (XÓA BỎ DÒNG LỆNH LỖI)
     function renderQuickPriceUpdater() {
         const tbody = document.getElementById('quickPriceUpdaterTable'); tbody.innerHTML = '';
         let uniqueGroup = [];
@@ -459,7 +521,7 @@
         uniqueGroup.forEach(group => {
             const tr = document.createElement('tr');
             tr.innerHTML = `<td><span class="${getBadgeClass(group.type)}">${group.type}</span></td><td style="font-weight:bold;">${group.brand}</td><td><input type="number" class="input-inline-edit" value="${group.currentPrice}" oninput="updateGlobalPrice(this, '${group.type}', '${group.brand}')"></td>`;
-            tbody.appendChild(tr); // Đã sửa: chỉ append thẻ tr hợp lệ vào giao diện
+            tbody.appendChild(tr);
         });
     }
 
@@ -469,6 +531,7 @@
         renderReportDetailsOnly();
     }
 
+    // Tổng hợp điều hướng chạy mượt cả 3 màn hình
     function renderReport() { renderQuickPriceUpdater(); renderReportDetailsOnly(); }
 
     function renderReportDetailsOnly() {
@@ -496,6 +559,8 @@
         totalLaiLoEl.innerText = tl === 0 ? '0 đ' : (tl > 0 ? '+' : '') + formatCurrency(tl);
         totalLaiLoEl.className = tl > 0 ? 'text-success' : (tl < 0 ? 'text-danger' : '');
     }
+
+    function clearAllData() { if(confirm("Xóa trống dữ liệu tạm màn hình?")) { db = []; editingId = null; resetFormState(); refreshAllTabs(); } }
 </script>
 
 </body>
