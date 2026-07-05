@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Danh Mục Đầu Tư Google Drive V12</title>
+    <title>Quản Lý Danh Mục Đầu Tư Google Drive V13</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
     <style>
@@ -53,7 +53,7 @@
             <input type="password" id="passwordInput" placeholder="Nhập mật khẩu..." style="text-align: center;">
         </div>
         <button class="btn-block" onclick="checkPassword()">Đăng Nhập</button>
-        <p id="loginError" style="color: var(--danger); font-size: 0.85rem; margin-top: 10px; display: none;">Mật khẩu không chính xác!</p>
+        <p id="loginError" style="color: var(--danger); font-size: 0.85rem; margin-top: 10px; display: none;">Mật khẩu không chính xác thưa bác!</p>
     </div>
 </div>
 
@@ -113,8 +113,7 @@
                                 <th>Lãi / Lỗ</th>
                             </tr>
                         </thead>
-                        <tbody id="summaryBrandTable">
-                            </tbody>
+                        <tbody id="summaryBrandTable"></tbody>
                     </table>
                 </div>
             </div>
@@ -241,7 +240,7 @@
 <script>
     // =========================================================================
     const FIXED_PASSWORD = "phongvan1!";
-    const CLIENT_ID = "393045823194-vmppb76eo9j48p83s136j2i2ltjdb13m.apps.googleusercontent.com"; // Điền Client ID từ Google Cloud Console
+    const CLIENT_ID = "393045823194-vmppb76eo9j48p83s136j2i2ltjdb13m.apps.googleusercontent.com"; // Điền Client ID bảo mật của bác vào đây thưa bác
     // =========================================================================
     
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -268,53 +267,73 @@
                 if (resp.error !== undefined) { throw (resp); }
                 document.getElementById('syncLoadBtn').disabled = false; document.getElementById('syncSaveBtn').disabled = false;
                 document.getElementById('authBtn').innerText = "🔄 Đã Kết Nối Google";
-                document.getElementById('driveStatus').innerText = "Trạng thái: Kết nối tài khoản thành công. Sẵn sàng nạp/lưu file.";
+                document.getElementById('driveStatus').innerText = "Trạng thái: Kết nối thành công. Sẵn sàng nạp/lưu file.";
                 findOrCreateFileOnDrive();
             },
         });
         gisiInited = true; checkLibraryLoad();
     }
 
-    function checkLibraryLoad() { if (gapiInited && gisiInited) { document.getElementById('driveStatus').innerText = "Trạng thái: Thư viện Google đã nạp. Hãy bấm Kết nối tài khoản."; } }
+    function checkLibraryLoad() { if (gapiInited && gisiInited) { document.getElementById('driveStatus').innerText = "Trạng thái: Hệ thống sẵn sàng. Hãy kết nối tài khoản thưa bác."; } }
     function handleAuthClick() { if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'}); else tokenClient.requestAccessToken({prompt: ''}); }
 
     async function findOrCreateFileOnDrive() {
         try {
-            document.getElementById('driveStatus').innerText = "Trạng thái: Đang quét tìm file Sổ Gốc trên Drive...";
+            document.getElementById('driveStatus').innerText = "Trạng thái: Đang tìm file Sổ Gốc...";
             let response = await gapi.client.drive.files.list({ q: `name = '${FILE_NAME}' and trashed = false`, fields: 'files(id, name)', spaces: 'drive' });
             let files = response.result.files;
             if (files && files.length > 0) {
-                targetFileId = files[0].id; document.getElementById('driveStatus').innerText = `Trạng thái: Đã thấy file Sổ gốc trên Drive. Hãy bấm Nạp Dữ Liệu.`;
-            } else { document.getElementById('driveStatus').innerText = "Trạng thái: Chưa có file trên Drive. App sẽ tự tạo file khi lưu."; }
+                targetFileId = files[0].id; document.getElementById('driveStatus').innerText = `Trạng thái: Đã thấy file trên đám mây. Hãy bấm nút Nạp Dữ Liệu thưa bác.`;
+            } else { document.getElementById('driveStatus').innerText = "Trạng thái: Chưa có file gốc. Hệ thống tự động tạo file mới khi bác bấm lưu."; }
         } catch (err) { document.getElementById('driveStatus').innerText = "Lỗi quét file: " + err.message; }
     }
 
+    // 📥 HÀM NẠP FILE THÔNG MINH (ĐÃ SỬA LỖI ĐỒNG BỘ VÀ LỆCH CỘT)
     async function loadFromDrive() {
-        if (!targetFileId) { alert("Chưa có file Sổ Gốc trên Drive!"); return; }
+        if (!targetFileId) { alert("Chưa thấy tệp dữ liệu nào trên đám mây thưa bác!"); return; }
         try {
-            document.getElementById('driveStatus').innerText = "Trạng thái: Đang tải dữ liệu từ đám mây...";
+            document.getElementById('driveStatus').innerText = "Trạng thái: Đang đồng bộ hóa dữ liệu...";
             let resp = await gapi.client.drive.files.get({ fileId: targetFileId, alt: 'media' });
             let text = resp.body; if (text.startsWith('\uFEFF')) text = text.substring(1);
             const lines = text.split('\n'); let importedDb = [];
+            
             for (let i = 1; i < lines.length; i++) {
                 let line = lines[i].trim(); if (!line || line.startsWith(',')) break; 
                 let cols = line.split(',').map(c => c.replace(/^"|"$/g, ''));
-                if (cols.length >= 7) { 
-                    let type = cols[0]; let brand = cols[1]; let date = cols[2]; let qty = parseFloat(cols[3]); let buyPrice = parseFloat(cols[4]); let totalBuy = parseFloat(cols[5]); let currentPrice = parseFloat(cols[6]);
-                    if (type && brand && !isNaN(qty)) {
-                        importedDb.push({ id: Date.now() + i, type: type, brand: brand, date: date, qty: qty, buyPrice: buyPrice, currentPrice: isNaN(currentPrice) ? buyPrice : currentPrice });
-                    }
+                
+                let type = cols[0]; 
+                let brand = cols[1]; 
+                let date = cols[2]; 
+                let qty = parseFloat(cols[3]); 
+                let buyPrice = 0;
+                let currentPrice = 0;
+
+                // THUẬT TOÁN KIỂM TRA Đếm Số Cột để tránh lỗi lệch cấu trúc file cũ và mới
+                if (cols.length === 8) {
+                    // Cấu trúc file bản cũ: lấy tổng tiền chia ngược ra giá đơn vị
+                    let totalBuyOld = parseFloat(cols[4]);
+                    currentPrice = parseFloat(cols[5]);
+                    buyPrice = qty > 0 ? totalBuyOld / qty : 0;
+                } else if (cols.length >= 9) {
+                    // Cấu trúc file bản mới: đọc trực tiếp cột đơn giá
+                    buyPrice = parseFloat(cols[4]);
+                    currentPrice = parseFloat(cols[6]);
+                }
+
+                if (type && brand && !isNaN(qty)) {
+                    importedDb.push({ id: Date.now() + i, type: type, brand: brand, date: date, qty: qty, buyPrice: buyPrice, currentPrice: isNaN(currentPrice) ? buyPrice : currentPrice });
                 }
             }
-            db = importedDb; refreshAllTabs();
-            document.getElementById('driveStatus').innerText = `Trạng thái: Đã nạp xong ${db.length} tài sản!`;
+            db = importedDb; 
+            refreshAllTabs(); // Chạy lệnh nạp giao diện an toàn
+            document.getElementById('driveStatus').innerText = `Trạng thái: Đã tải thành công bản dữ liệu gốc về app thưa bác!`;
         } catch (err) { alert("Lỗi nạp file: " + err.message); }
     }
 
     async function saveToDrive() {
-        if (db.length === 0) { alert("Bộ nhớ tạm trống!"); return; }
+        if (db.length === 0) { alert("Không có số liệu mới để lưu thưa bác!"); return; }
         try {
-            document.getElementById('driveStatus').innerText = "Trạng thái: Đang chuẩn bị gửi lên Drive...";
+            document.getElementById('driveStatus').innerText = "Trạng thái: Đang tiến hành lưu trữ bảo mật...";
             let csvContent = "\uFEFF"; csvContent += "Loại tài sản,Brand Name,Ngày giao dịch,Số lượng,Giá mua/Đơn vị (VND),Tổng giá mua (VND),Giá hiện tại/Đơn vị (VND),Giá trị hiện tại (VND),Lãi / Lỗ (VND)\n";
             let totalVon = 0, totalHienTai = 0;
             let sortedDbForExport = [...db].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
@@ -333,7 +352,8 @@
                 let resp = await gapi.client.request({ 'path': '/upload/drive/v3/files', 'method': 'POST', 'params': {'uploadType': 'multipart'}, 'headers': {'Content-Type': 'multipart/related; boundary=' + boundary}, 'body': multipartRequestBody });
                 targetFileId = resp.result.id;
             }
-            document.getElementById('driveStatus').innerText = "Trạng thái: Đã lưu thành công lên Drive!";
+            document.getElementById('driveStatus').innerText = "Trạng thái: Đã đồng bộ lưu đè lên Drive thành công!";
+            alert("Đã lưu trữ sổ sách an toàn lên Google Drive của bác!");
         } catch (err) { alert("Lỗi ghi file: " + err.message); }
     }
 
@@ -377,6 +397,7 @@
         db.push({ id: Date.now(), type: type, brand: brand, date: date, qty: qty, buyPrice: buyPrice, currentPrice: existingAsset ? existingAsset.currentPrice : buyPrice });
         renderTradeLog(); updateBrandSuggestions();
         document.getElementById('assetBrand').value = ''; document.getElementById('assetQty').value = ''; document.getElementById('assetBuyPrice').value = ''; document.getElementById('assetDate').value = '';
+        alert("Đã lưu tạm vào máy, bác lưu ý ấn nút số 3 để đồng bộ lên mây nhé bác!");
     }
 
     function deleteAsset(id) { if(confirm("Bác chắc chắn muốn xóa không?")) { db = db.filter(item => item.id !== id); renderTradeLog(); updateBrandSuggestions(); } }
@@ -392,9 +413,7 @@
         });
     }
 
-    // NÂNG CẤP HÀM: Vẽ đồng thời 2 bảng ở màn hình SUMMARY
     function renderSummary() {
-        // --- BẢNG 1: TỔNG HỢP THEO NHÓM LỚN (Đã có sẵn) ---
         const tbody = document.getElementById('summaryTable'); tbody.innerHTML = '';
         const categories = ['Vàng', 'Chứng khoán', 'Crypto', 'Tiền tiết kiệm'];
         let summaryMap = {}; categories.forEach(cat => summaryMap[cat] = { qty: 0, val: 0 });
@@ -407,94 +426,40 @@
         });
         document.getElementById('grandTotalSummaryBox').innerText = `Tổng tài sản: ${formatCurrency(grandTotal)}`;
 
-        // --- BẢNG 2 (MỚI THÊM): BẢNG PHỤ CHI TIẾT TỪNG THƯƠNG HIỆU ---
-        const brandTbody = document.getElementById('summaryBrandTable');
-        brandTbody.innerHTML = '';
-
-        // Tiến hành gom nhóm dữ liệu theo (Loại tài sản + Thương hiệu)
+        const brandTbody = document.getElementById('summaryBrandTable'); brandTbody.innerHTML = '';
         let brandMap = {};
         db.forEach(item => {
             const key = `${item.type}|${item.brand}`;
-            if (!brandMap[key]) {
-                brandMap[key] = {
-                    type: item.type,
-                    brand: item.brand,
-                    totalQty: 0,
-                    totalBuyCost: 0,
-                    currentPrice: item.currentPrice
-                };
-            }
-            brandMap[key].totalQty += item.qty;
-            brandMap[key].totalBuyCost += (item.qty * item.buyPrice);
-            brandMap[key].currentPrice = item.currentPrice; // Đồng bộ mức giá hiện tại mới nhất
+            if (!brandMap[key]) { brandMap[key] = { type: item.type, brand: item.brand, totalQty: 0, totalBuyCost: 0, currentPrice: item.currentPrice }; }
+            brandMap[key].totalQty += item.qty; brandMap[key].totalBuyCost += (item.qty * item.buyPrice); brandMap[key].currentPrice = item.currentPrice;
         });
-
         let sortedKeys = Object.keys(brandMap).sort();
-        if(sortedKeys.length === 0) {
-            brandTbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#64748b;">Chưa có dữ liệu chi tiết thương hiệu thưa bác.</td></tr>';
-            return;
-        }
-
-        // Biến tích lũy để tính dòng Row Total ở cuối bảng
+        if(sortedKeys.length === 0) { brandTbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#64748b;">Chưa có dữ liệu chi tiết thương hiệu thưa bác.</td></tr>'; return; }
         let totalBuyAll = 0, totalCurrentAll = 0, totalPLAll = 0;
-
         sortedKeys.forEach(key => {
-            const g = brandMap[key];
-            const avgBuyPrice = g.totalQty > 0 ? g.totalBuyCost / g.totalQty : 0; // Tính trung bình giá mua gốc
-            const totalCurrentValue = g.totalQty * g.currentPrice; // Tổng giá trị hiện tại ngày hôm nay
-            const pl = totalCurrentValue - g.totalBuyCost; // Tính toán Lãi / Lỗ cụ thể
-
-            totalBuyAll += g.totalBuyCost;
-            totalCurrentAll += totalCurrentValue;
-            totalPLAll += pl;
-
-            let plClass = pl > 0 ? 'text-success' : (pl < 0 ? 'text-danger' : '');
-            let plText = pl === 0 ? '0 đ' : (pl > 0 ? '+' : '') + formatCurrency(pl);
-
+            const g = brandMap[key]; const avgBuyPrice = g.totalQty > 0 ? g.totalBuyCost / g.totalQty : 0; const totalCurrentValue = g.totalQty * g.currentPrice; const pl = totalCurrentValue - g.totalBuyCost;
+            totalBuyAll += g.totalBuyCost; totalCurrentAll += totalCurrentValue; totalPLAll += pl;
+            let plClass = pl > 0 ? 'text-success' : (pl < 0 ? 'text-danger' : ''); let plText = pl === 0 ? '0 đ' : (pl > 0 ? '+' : '') + formatCurrency(pl);
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><span class="${getBadgeClass(g.type)}">${g.type}</span></td>
-                <td style="font-weight:bold;">${g.brand}</td>
-                <td>${g.totalQty % 1 === 0 ? g.totalQty : g.totalQty.toFixed(4)}</td>
-                <td>${formatCurrency(avgBuyPrice)}</td>
-                <td>${formatCurrency(g.currentPrice)}</td>
-                <td>${formatCurrency(g.totalBuyCost)}</td>
-                <td style="font-weight:500; color:var(--primary);">${formatCurrency(totalCurrentValue)}</td>
-                <td class="${plClass}">${plText}</td>
-            `;
+            tr.innerHTML = `<td><span class="${getBadgeClass(g.type)}">${g.type}</span></td><td style="font-weight:bold;">${g.brand}</td><td>${g.totalQty % 1 === 0 ? g.totalQty : g.totalQty.toFixed(4)}</td><td>${formatCurrency(avgBuyPrice)}</td><td>${formatCurrency(g.currentPrice)}</td><td>${formatCurrency(g.totalBuyCost)}</td><td style="font-weight:500; color:var(--primary);">${formatCurrency(totalCurrentValue)}</td><td class="${plClass}">${plText}</td>`;
             brandTbody.appendChild(tr);
         });
-
-        // THÊM DÒNG CUỐI: ROW TOTAL TỔNG CỘNG CỦA BẢNG PHỤ
-        const totalTr = document.createElement('tr');
-        totalTr.style.fontWeight = 'bold';
-        totalTr.style.background = '#f1f5f9';
-        
-        let tPLClass = totalPLAll > 0 ? 'text-success' : (totalPLAll < 0 ? 'text-danger' : '');
-        let tPLText = totalPLAll === 0 ? '0 đ' : (totalPLAll > 0 ? '+' : '') + formatCurrency(totalPLAll);
-
-        totalTr.innerHTML = `
-            <td colspan="2" style="color: #0f172a;">TỔNG CỘNG (ROW TOTAL)</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>${formatCurrency(totalBuyAll)}</td>
-            <td style="color:var(--primary);">${formatCurrency(totalCurrentAll)}</td>
-            <td class="${tPLClass}">${tPLText}</td>
-        `;
+        const totalTr = document.createElement('tr'); totalTr.style.fontWeight = 'bold'; totalTr.style.background = '#f1f5f9';
+        let tPLClass = totalPLAll > 0 ? 'text-success' : (totalPLAll < 0 ? 'text-danger' : ''); let tPLText = totalPLAll === 0 ? '0 đ' : (totalPLAll > 0 ? '+' : '') + formatCurrency(totalPLAll);
+        totalTr.innerHTML = `<td colspan="2" style="color: #0f172a;">TỔNG CỘNG (ROW TOTAL)</td><td>-</td><td>-</td><td>-</td><td>${formatCurrency(totalBuyAll)}</td><td style="color:var(--primary);">${formatCurrency(totalCurrentAll)}</td><td class="${tPLClass}">${tPLText}</td>`;
         brandTbody.appendChild(totalTr);
     }
 
+    // 🔧 HÀM ĐÃ SỬA LỖI APPENDCHILD (XÓA BỎ DÒNG LỆNH LỖI)
     function renderQuickPriceUpdater() {
         const tbody = document.getElementById('quickPriceUpdaterTable'); tbody.innerHTML = '';
         let uniqueGroup = [];
         db.forEach(item => { if(!uniqueGroup.some(g => g.type === item.type && g.brand === item.brand)) uniqueGroup.push({ type: item.type, brand: item.brand, currentPrice: item.currentPrice }); });
-        if(uniqueGroup.length === 0) { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#64748b;">Chưa có dữ liệu.</td></tr>'; return; }
+        if(uniqueGroup.length === 0) { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#64748b;">Chưa có dữ liệu tài sản nào.</td></tr>'; return; }
         uniqueGroup.forEach(group => {
             const tr = document.createElement('tr');
             tr.innerHTML = `<td><span class="${getBadgeClass(group.type)}">${group.type}</span></td><td style="font-weight:bold;">${group.brand}</td><td><input type="number" class="input-inline-edit" value="${group.currentPrice}" oninput="updateGlobalPrice(this, '${group.type}', '${group.brand}')"></td>`;
-            tbody.appendChild(group); // Sửa lỗi trình duyệt: append dòng tr vào bảng
-            tbody.appendChild(tr);
+            tbody.appendChild(tr); // Đã sửa: chỉ append thẻ tr hợp lệ vào giao diện
         });
     }
 
@@ -511,7 +476,7 @@
         const filterBrand = document.getElementById('filterBrand').value.trim().toUpperCase();
         const tbody = document.getElementById('reportTable'); tbody.innerHTML = '';
         let filtered = db.filter(item => (filterType === 'Tất cả' || item.type === filterType) && (!filterBrand || item.brand.includes(filterBrand)));
-        if(filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#64748b;">Không có dữ liệu.</td></tr>'; recalculateSummaryTotals(); return; }
+        if(filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#64748b;">Không có dữ liệu phù hợp.</td></tr>'; recalculateSummaryTotals(); return; }
         filtered.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
         filtered.forEach(item => {
             const totalBuy = item.qty * item.buyPrice; const totalCurrent = item.qty * item.currentPrice; const pl = totalCurrent - totalBuy;
