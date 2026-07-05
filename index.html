@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Danh Mục Đầu Tư Google Drive V14</title>
+    <title>Quản Lý Danh Mục Đầu Tư Google Drive V15</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
     <style>
@@ -14,8 +14,8 @@
         }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--background); color: var(--text); margin: 0; padding: 0; }
         #loginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; box-sizing: border-box; }
-        #mainScreen { display: none; }
-        .container { max-width: 1000px; margin: 0 auto; padding: 16px; }
+        #mainScreen { display: none; padding-top: 20px; padding-bottom: 40px; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 16px; position: relative; z-index: 10; }
         .card { background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         h2 { margin-top: 0; font-size: 1.2rem; color: #0f172a; margin-bottom: 12px; }
         .tabs { display: flex; background: #e2e8f0; border-radius: 8px; padding: 4px; margin-bottom: 16px; }
@@ -41,12 +41,68 @@
         .text-danger { color: var(--danger); font-weight: bold; }
         .filter-zone { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
         .input-inline-edit { width: 120px; padding: 6px; font-size: 0.9rem; border: 1px solid var(--primary); }
+
+        /* MỚI: CSS CHO 2 CÂU ĐỐI TÀI LỘC DỌC 2 BÊN */
+        .cau-doi {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%);
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 1.4rem;
+            text-align: center;
+            padding: 25px 8px;
+            border-radius: 8px;
+            border: 3px solid #fbbf24;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 0 10px rgba(251, 191, 36, 0.4);
+            z-index: 5;
+            line-height: 1.6;
+            font-family: "Times New Roman", serif;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+        }
+        .cau-doi-left { left: 25px; }
+        .cau-doi-right { right: 25px; }
+        .cau-doi span { display: block; margin-bottom: 4px; }
+        .cau-doi .khoang-cach { height: 15px; display: block; } /* Khoảng cách giữa 2 vế */
+
+        /* Ẩn câu đối trên màn hình hẹp (dưới 1200px như S25 Ultra màn hình dọc) để không che ứng dụng */
+        @media (max-width: 1200px) {
+            .cau-doi { display: none; }
+        }
     </style>
 </head>
 <body>
 
+<!-- CÂU ĐỐI BÊN TRÁI -->
+<div class="cau-doi cau-doi-left">
+    <span>ĐẦU</span>
+    <span>TƯ</span>
+    <span>ĐẮC</span>
+    <span>LỢI</span>
+    <span class="khoang-cach"></span>
+    <span>TÀI</span>
+    <span>NHƯ</span>
+    <span>THỦY</span>
+</div>
+
+<!-- CÂU ĐỐI BÊN PHẢI -->
+<div class="cau-doi cau-doi-right">
+    <span>TÍCH</span>
+    <span>LŨY</span>
+    <span>THÀNH</span>
+    <span>CÔNG</span>
+    <span class="khoang-cach"></span>
+    <span>LỘC</span>
+    <span>MÃN</span>
+    <span>ĐƯỜNG</span>
+</div>
+
+<!-- 1. MÀN HÌNH ĐĂNG NHẬP CHÍNH -->
 <div id="loginScreen">
-    <div class="card" style="width: 100%; max-width: 360px; text-align: center;">
+    <div class="card" style="width: 100%; max-width: 360px; text-align: center; position: relative; z-index: 10;">
         <h2 style="font-size: 1.4rem; margin-bottom: 8px;">Hệ Thống Đầu Tư</h2>
         <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 20px;">Vui lòng nhập mật khẩu hệ thống</p>
         <div class="form-group">
@@ -57,9 +113,11 @@
     </div>
 </div>
 
+<!-- 2. MÀN HÌNH CHÍNH SỬ DỤNG -->
 <div id="mainScreen">
     <div class="container">
         
+        <!-- KHU VỰC KẾT NỐI VÀ ĐỒNG BỘ GOOGLE DRIVE -->
         <div class="card" style="border-left: 5px solid var(--google-color);">
             <h2>☁️ Đồng Bộ Bộ Nhớ Google Drive</h2>
             <p style="font-size: 0.85rem; color: #64748b; margin-top: -6px;">Kết nối Google để nạp và lưu tự động hằng ngày.</p>
@@ -71,12 +129,14 @@
             <p id="driveStatus" style="font-size: 0.85rem; font-weight: 500; color: #475569; margin-top: 10px; margin-bottom: 0;">Trạng thái: Chưa kết nối tài khoản.</p>
         </div>
 
+        <!-- THANH ĐIỀU HƯỚNG TAB -->
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('summary')">Tổng Quan (Summary)</button>
             <button class="tab-btn" onclick="switchTab('muaban')">Mua / Bán Tài Sản</button>
             <button class="tab-btn" onclick="switchTab('baocao')">Báo Cáo Chi Tiết</button>
         </div>
 
+        <!-- TAB 1: SUMMARY -->
         <div id="tab-summary" class="tab-content active">
             <div class="card" style="border-top: 4px solid var(--success);">
                 <h2>📊 Bảng Tổng Hợp Danh Mục Tài Sản (Summary Board)</h2>
@@ -119,6 +179,7 @@
             </div>
         </div>
 
+        <!-- TAB 2: MUA / BÁN -->
         <div id="tab-muaban" class="tab-content">
             <div class="card" id="assetFormCard">
                 <h2 id="formTitle">Nhập Tài Sản Mới (Mua vào)</h2>
@@ -167,7 +228,8 @@
                                 <th>Số lượng</th>
                                 <th>Giá mua/Đơn vị</th>
                                 <th>Tổng mua</th>
-                                <th>Hành động</th> </tr>
+                                <th>Hành động</th>
+                            </tr>
                         </thead>
                         <tbody id="tradeLogTable"></tbody>
                     </table>
@@ -175,6 +237,7 @@
             </div>
         </div>
 
+        <!-- TAB 3: BÁO CÁO CHI TIẾT -->
         <div id="tab-baocao" class="tab-content">
             <div class="card" style="border-top: 4px solid var(--primary);">
                 <h2>📊 Cập Nhật Nhanh Giá Thị Trường Hôm Nay</h2>
@@ -244,7 +307,7 @@
     
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
     let db = []; let tokenClient; let gapiInited = false; let gisiInited = false; let targetFileId = null;
-    let editingId = null; // Biến toàn cục mới: Dùng để theo dõi id giao dịch nào đang được sửa
+    let editingId = null; 
     const FILE_NAME = "Sổ_Gốc_Đầu_Tư_Đám_Mây.csv";
 
     function checkPassword() {
@@ -374,7 +437,6 @@
         uniqueBrands.forEach(brand => { const option = document.createElement('option'); option.value = brand; datalist.appendChild(option); });
     }
 
-    // 🔧 HÀM LƯU TÀI SẢN: ĐÃ NÂNG CẤP XỬ LÝ ĐỒNG THỜI CẢ THÊM MỚI VÀ SỬA ĐỔI GIAO DỊCH
     function addAsset() {
         const type = document.getElementById('assetType').value;
         const brand = document.getElementById('assetBrand').value.trim().toUpperCase();
@@ -386,64 +448,45 @@
         if(!date) { const today = new Date(); date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`; }
 
         if (editingId !== null) {
-            // CHẾ ĐỘ SỬA: Tìm và ghi đè số liệu trực tiếp vào bản ghi cũ
             const item = db.find(i => i.id === editingId);
             if (item) {
-                item.type = type;
-                item.brand = brand;
-                item.qty = qty;
-                item.buyPrice = buyPrice;
-                item.date = date;
+                item.type = type; item.brand = brand; item.qty = qty; item.buyPrice = buyPrice; item.date = date;
             }
-            editingId = null;
-            resetFormState();
+            editingId = null; resetFormState();
             alert("Đã cập nhật thay đổi giao dịch thành công thưa bác! Bác nhớ ấn nút số 3 để đồng bộ lên mây nhé.");
         } else {
-            // CHẾ ĐỘ THÊM MỚI: Thêm bản ghi mới vào mảng
             const existingAsset = db.find(item => item.type === type && item.brand === brand);
             db.push({ id: Date.now(), type: type, brand: brand, date: date, qty: qty, buyPrice: buyPrice, currentPrice: existingAsset ? existingAsset.currentPrice : buyPrice });
             resetFormState();
             alert("Đã lưu tạm vào máy, bác lưu ý ấn nút số 3 để đồng bộ lên mây nhé bác!");
         }
-
         renderTradeLog(); updateBrandSuggestions();
     }
 
-    // MỚI THÊM: Kích hoạt chế độ sửa khi bác click vào nút "Sửa"
     function editAsset(id) {
         const item = db.find(i => i.id === id);
         if (!item) return;
-
-        editingId = id; // Ghi nhận ID đang thực hiện sửa đổi
-        
-        // Đẩy toàn bộ dữ liệu ngược lại lên form nhập liệu
+        editingId = id; 
         document.getElementById('assetType').value = item.type;
         document.getElementById('assetBrand').value = item.brand;
         document.getElementById('assetQty').value = item.qty;
         document.getElementById('assetBuyPrice').value = item.buyPrice;
         document.getElementById('assetDate').value = item.date;
 
-        // Thay đổi giao diện biểu mẫu sang trạng thái "Sửa"
         document.getElementById('formTitle').innerText = "🔧 Đang Chỉnh Sửa Giao Dịch";
         const submitBtn = document.getElementById('submitAssetBtn');
         submitBtn.innerText = "🔧 Cập Nhật Thay Đổi (Sửa)";
         submitBtn.style.backgroundColor = "var(--warning)";
-
-        // Tự động cuộn trang lên khung form một cách mượt mà trên màn hình S25 Ultra
         document.getElementById('assetFormCard').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // MỚI THÊM: Đưa biểu mẫu trở lại trạng thái nhập liệu bình thường
     function resetFormState() {
         document.getElementById('formTitle').innerText = "Nhập Tài Sản Mới (Mua vào)";
         const submitBtn = document.getElementById('submitAssetBtn');
         submitBtn.innerText = "Thêm / Lưu Tài Sản Vào Bộ Nhớ Tạm";
         submitBtn.style.backgroundColor = "var(--primary)";
-        
-        document.getElementById('assetBrand').value = ''; 
-        document.getElementById('assetQty').value = ''; 
-        document.getElementById('assetBuyPrice').value = ''; 
-        document.getElementById('assetDate').value = '';
+        document.getElementById('assetBrand').value = ''; document.getElementById('assetQty').value = ''; 
+        document.getElementById('assetBuyPrice').value = ''; document.getElementById('assetDate').value = '';
     }
 
     function deleteAsset(id) { 
@@ -454,7 +497,6 @@
         } 
     }
 
-    // 🔧 HÀM RENDER: Bổ sung thêm nút "Sửa" màu xanh dương bên cạnh nút "Xóa"
     function renderTradeLog() {
         const tbody = document.getElementById('tradeLogTable'); tbody.innerHTML = '';
         if(db.length === 0) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#64748b;">Chưa có dữ liệu nào.</td></tr>'; return; }
@@ -531,7 +573,6 @@
         renderReportDetailsOnly();
     }
 
-    // Tổng hợp điều hướng chạy mượt cả 3 màn hình
     function renderReport() { renderQuickPriceUpdater(); renderReportDetailsOnly(); }
 
     function renderReportDetailsOnly() {
