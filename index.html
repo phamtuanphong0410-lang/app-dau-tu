@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Danh Mục Đầu Tư Mr.Mike</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #ea580c;
+            --google-color: #db4437;
+            --background: #f8fafc;
+            --text: #1e293b;
+            --card-bg: #ffffff;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--background); color: var(--text); margin: 0; padding: 0;
+        }
+        #loginScreen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; padding: 20px; box-sizing: border-box;
+        }
+        #mainScreen { display: none; }
+        .container { max-width: 900px; margin: 0 auto; padding: 16px; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; font-size: 1.2rem; color: #0f172a; margin-bottom: 12px; }
+        .tabs { display: flex; background: #e2e8f0; border-radius: 8px; padding: 4px; margin-bottom: 16px; }
+        .tab-btn { flex: 1; padding: 10px; text-align: center; background: none; border: none; font-weight: bold; color: #64748b; cursor: pointer; border-radius: 6px; font-size: 0.95rem; }
+        .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.85rem; margin-bottom: 4px; font-weight: 500; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+        button { padding: 10px 16px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        button.btn-block { width: 100%; padding: 12px; }
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+        th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f1f5f9; color: #475569; }
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .badge-vang { background: #fef3c7; color: #d97706; }
+        .badge-ck { background: #dbeafe; color: #2563eb; }
+        .badge-crypto { background: #f3e8ff; color: #7c3aed; }
+        .badge-tietkiem { background: #dcfce7; color: #16a34a; }
+        .text-success { color: var(--success); font-weight: bold; }
+        .text-danger { color: var(--danger); font-weight: bold; }
+        .filter-zone { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .input-inline-edit { width: 120px; padding: 6px; font-size: 0.9rem; border: 1px solid var(--primary); }
+    </style>
+</head>
+<body>
+
+<div id="loginScreen">
+    <div class="card" style="width: 100%; max-width: 360px; text-align: center;">
+        <h2 style="font-size: 1.4rem; margin-bottom: 8px;">Hệ Thống Đầu Tư</h2>
+        <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 20px;">Vui lòng nhập mật khẩu hệ thống</p>
+        <div class="form-group">
+            <input type="password" id="passwordInput" placeholder="Nhập mật khẩu..." style="text-align: center;">
+        </div>
+        <button class="btn-block" onclick="checkPassword()">Đăng Nhập</button>
+        <p id="loginError" style="color: var(--danger); font-size: 0.85rem; margin-top: 10px; display: none;">Mật khẩu không chính xác, thưa bác!</p>
+    </div>
+</div>
+
+<div id="mainScreen">
+    <div class="container">
+        
+        <div class="card" style="border-left: 5px solid var(--google-color);">
+            <h2>☁️ Đồng Bộ Bộ Nhớ Google Drive</h2>
+            <p style="font-size: 0.85rem; color: #64748b; margin-top: -6px;">
+                Kết nối với tài khoản Google để tự động đọc và ghi đè file dữ liệu <strong>đầu tư gốc</strong> trực tiếp trên đám mây.
+            </p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="authBtn" onclick="handleAuthClick()" style="background-color: var(--google-color);">🔐 1. Kết Nối Tài Khoản Google</button>
+                <button id="syncLoadBtn" onclick="loadFromDrive()" style="background-color: var(--warning);" disabled>📥 2. Nạp Bản Gốc Từ Drive</button>
+                <button id="syncSaveBtn" onclick="saveToDrive()" style="background-color: var(--success);" disabled>💾 3. Lưu Đè Lên Drive</button>
+            </div>
+            <p id="driveStatus" style="font-size: 0.85rem; font-weight: 500; color: #475569; margin-top: 10px; margin-bottom: 0;">Trạng thái: Chưa kết nối tài khoản.</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('summary')">Tổng Quan (Summary)</button>
+            <button class="tab-btn" onclick="switchTab('muaban')">Mua / Bán Tài Sản</button>
+            <button class="tab-btn" onclick="switchTab('baocao')">Báo Cáo Chi Tiết</button>
+        </div>
+
+        <div id="tab-summary" class="tab-content active">
+            <div class="card" style="border-top: 4px solid var(--success);">
+                <h2>📊 Bảng Tổng Hợp Tài Sản (Summary Board)</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Loại tài sản</th>
+                                <th>Tổng số lượng nắm giữ</th>
+                                <th>Tổng giá trị hiện tại (VND)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTable"></tbody>
+                    </table>
+                </div>
+                <div id="grandTotalSummaryBox" style="margin-top: 20px; border-top: 3px double #cbd5e1; padding-top: 14px; text-align: right; font-weight: bold; font-size: 1.3rem; color: var(--primary);">
+                    Tổng tài sản: 0 đ
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-muaban" class="tab-content">
+            <div class="card">
+                <h2>Nhập Tài Sản Mới (Mua vào)</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label>Loại tài sản</label>
+                        <select id="assetType">
+                            <option value="Vàng">Vàng</option>
+                            <option value="Chứng khoán">Chứng khoán</option>
+                            <option value="Crypto">Crypto</option>
+                            <option value="Tiền tiết kiệm">Tiền tiết kiệm</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Brand Name (Mã/Tên)</label>
+                        <input type="text" id="assetBrand" list="brandSuggestions" placeholder="Chọn hoặc tự gõ mới...">
+                        <datalist id="brandSuggestions"></datalist>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label>Số lượng</label>
+                        <input type="number" id="assetQty" step="any" placeholder="Ví dụ: 2, 100...">
+                    </div>
+                    <div class="form-group">
+                        <label>Giá mua / Đơn vị (VNĐ)</label>
+                        <input type="number" id="assetBuyPrice" placeholder="Giá lúc mua">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Ngày giao dịch (Bỏ trống = Ngày hôm nay)</label>
+                    <input type="date" id="assetDate">
+                </div>
+                <button class="btn-block" onclick="addAsset()">Thêm / Lưu Tài Sản Vào Bộ Nhớ Tạm</button>
+            </div>
+
+            <div class="card">
+                <h2>Danh Sách Giao Dịch Hiện Tại (Ngày mới nhất xếp đầu)</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Loại</th>
+                                <th>Brand Name</th>
+                                <th>Ngày GD</th>
+                                <th>Số lượng</th>
+                                <th>Giá mua/Đơn vị</th>
+                                <th>Tổng mua</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tradeLogTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-baocao" class="tab-content">
+            <div class="card" style="border-top: 4px solid var(--primary);">
+                <h2>📊 Cập Nhật Nhanh Giá Thị Trường Hôm Nay</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Loại tài sản</th>
+                                <th>Brand Name</th>
+                                <th style="width: 200px;">Giá hiện tại ngày hôm nay (VNĐ)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="quickPriceUpdaterTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Bộ Lọc Chi Tiết</h2>
+                <div class="filter-zone">
+                    <select id="filterType" onchange="renderReport()" style="flex: 2; min-width: 150px;">
+                        <option value="Tất cả">-- Tất cả loại tài sản --</option>
+                        <option value="Vàng">Vàng</option>
+                        <option value="Chứng khoán">Chứng khoán</option>
+                        <option value="Crypto">Crypto</option>
+                        <option value="Tiền tiết kiệm">Tiền tiết kiệm</option>
+                    </select>
+                    <input type="text" id="filterBrand" oninput="renderReport()" placeholder="Tìm theo Brand Name..." style="flex: 2; min-width: 150px;">
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Sổ Chi Tiết Danh Mục & Ước Tính Lãi Lỗ</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Loại</th>
+                                <th>Brand Name</th>
+                                <th>Ngày GD</th>
+                                <th>Số lượng</th>
+                                <th>Tổng giá mua</th>
+                                <th>Giá hiện tại</th>
+                                <th>Giá trị hiện tại</th>
+                                <th>Lãi / Lỗ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTable"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 16px; border-top: 2px solid #e2e8f0; padding-top: 12px; text-align: right; font-weight: bold; font-size: 1.1rem;">
+                    <span>Tổng vốn đầu tư: <span id="totalVonClick">0đ</span></span><br>
+                    <span>Tổng giá trị hiện tại: <span id="totalHienTaiClick">0đ</span></span><br>
+                    <span>Tổng Lãi/Lỗ: <span id="totalLaiLoClick">0đ</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // =========================================================================
+    // 🎛️ BÁC CẦN ĐIỀN THÔNG TIN BẢO MẬT CỦA BÁC VÀO ĐÂY ĐỂ ĐỒNG BỘ ĐƯỢC DRIVE
+    // =========================================================================
+    const FIXED_PASSWORD = "phongvan1!"; // Mật khẩu đăng nhập ứng dụng
+    const CLIENT_ID = "BA_C_DIEN_CLIENT_ID_TAI_DAY.apps.googleusercontent.com"; // Điền Client ID từ Google Cloud Console
+    
+    // Các quyền truy cập cần thiết (Chỉ xin quyền quản lý các file do chính App này tạo ra trên Drive của bác)
+    const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+    
+    let db = [];
+    let tokenClient;
+    let gapiInited = false;
+    let gisiInited = false;
+    let targetFileId = null; // ID của file Excel trên Drive của bác
+    const FILE_NAME = "Sổ_Gốc_Đầu_Tư_Đám_Mây.csv";
+
+    function checkPassword() {
+        const input = document.getElementById('passwordInput').value;
+        if (input === FIXED_PASSWORD) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'block';
+            initApp();
+        } else {
+            document.getElementById('loginError').style.display = 'block';
+        }
+    }
+
+    // Khởi tạo thư viện API của Google khi mở App
+    function initApp() {
+        gapi.load('client', async () => {
+            await gapi.client.init({
+                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+            });
+            gapiInited = true;
+            checkLibraryLoad();
+        });
+
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: (resp) => {
+                if (resp.error !== undefined) { throw (resp); }
+                document.getElementById('syncLoadBtn').disabled = false;
+                document.getElementById('syncSaveBtn').disabled = false;
+                document.getElementById('authBtn').innerText = "🔄 Đã Kết Nối Google";
+                document.getElementById('driveStatus').innerText = "Trạng thái: Kết nối tài khoản thành công. Sẵn sàng nạp/lưu file.";
+                // Tự động quét tìm file trên Drive sau khi đăng nhập
+                findOrCreateFileOnDrive();
+            },
+        });
+        gisiInited = true;
+        checkLibraryLoad();
+    }
+
+    function checkLibraryLoad() {
+        if (gapiInited && gisiInited) {
+            document.getElementById('driveStatus').innerText = "Trạng thái: Thư viện Google đã nạp. Hãy bấm nút Kết nối tài khoản.";
+        }
+    }
+
+    function handleAuthClick() {
+        // Gọi bảng đăng nhập tài khoản Google của máy bác
+        if (gapi.client.getToken() === null) {
+            tokenClient.requestAccessToken({prompt: 'consent'});
+        } else {
+            tokenClient.requestAccessToken({prompt: ''});
+        }
+    }
+
+    // TÌM HOẶC TỰ TẠO FILE SỔ GỐC TRÊN GOOGLE DRIVE
+    async function findOrCreateFileOnDrive() {
+        try {
+            document.getElementById('driveStatus').innerText = "Trạng thái: Đang quét tìm file Sổ Gốc trên Drive...";
+            let response = await gapi.client.drive.files.list({
+                q: `name = '${FILE_NAME}' and trashed = false`,
+                fields: 'files(id, name)',
+                spaces: 'drive'
+            });
+            let files = response.result.files;
+            if (files && files.length > 0) {
+                targetFileId = files[0].id;
+                document.getElementById('driveStatus').innerText = `Trạng thái: Đã thấy file Sổ gốc trên Drive (ID: ${targetFileId}). Hãy bấm Nạp Dữ Liệu.`;
+            } else {
+                document.getElementById('driveStatus').innerText = "Trạng thái: Chưa có file trên Drive. App sẽ tự tạo file khi bác bấm 'Lưu Đè Lên Drive'.";
+            }
+        } catch (err) {
+            document.getElementById('driveStatus').innerText = "Lỗi quét file: " + err.message;
+        }
+    }
+
+    // 📥 ĐỌC DỮ LIỆU TỪ FILE TRÊN GOOGLE DRIVE NẠP VÀO APP
+    async function loadFromDrive() {
+        if (!targetFileId) {
+            alert("Chưa thấy file nào tên '" + FILE_NAME + "' trên Drive của bác để nạp cả ạ! Bác vui lòng nhập dữ liệu rồi bấm nút số 3 để Tạo file mới trước nhé.");
+            return;
+        }
+        try {
+            document.getElementById('driveStatus').innerText = "Trạng thái: Đang tải dữ liệu từ đám mây...";
+            let resp = await gapi.client.drive.files.get({
+                fileId: targetFileId,
+                alt: 'media'
+            });
+            
+            let text = resp.body;
+            if (text.startsWith('\uFEFF')) text = text.substring(1);
+            
+            const lines = text.split('\n');
+            let importedDb = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                let line = lines[i].trim();
+                if (!line || line.startsWith(',')) break; 
+                let cols = line.split(',').map(c => c.replace(/^"|"$/g, ''));
+                if (cols.length >= 6) {
+                    let type = cols[0];
+                    let brand = cols[1];
+                    let date = cols[2];
+                    let qty = parseFloat(cols[3]);
+                    let totalBuy = parseFloat(cols[4]);
+                    let currentPrice = parseFloat(cols[5]);
+                    let buyPrice = qty > 0 ? totalBuy / qty : 0;
+                    
+                    if (type && brand && !isNaN(qty)) {
+                        importedDb.push({
+                            id: Date.now() + i,
+                            type: type, brand: brand, date: date, qty: qty,
+                            buyPrice: buyPrice, currentPrice: isNaN(currentPrice) ? buyPrice : currentPrice
+                        });
+                    }
+                }
+            }
+            db = importedDb;
+            refreshAllTabs();
+            document.getElementById('driveStatus').innerText = `Trạng thái: Đã nạp xong ${db.length} tài sản từ file đám mây lúc ${new Date().toLocaleTimeString()}!`;
+            alert("Đã đồng bộ thành công dữ liệu từ Google Drive của bác!");
+        } catch (err) {
+            alert("Lỗi nạp file: " + err.message);
+        }
+    }
+
+    // 💾 GHI ĐÈ / TẠO MỚI DỮ LIỆU LÊN FILE TRÊN GOOGLE DRIVE
+    async function saveToDrive() {
+        if (db.length === 0) {
+            alert("Bộ nhớ tạm đang trống, không có dữ liệu để lưu thưa bác!");
+            return;
+        }
+        try {
+            document.getElementById('driveStatus').innerText = "Trạng thái: Đang chuẩn bị gói dữ liệu gửi lên Drive...";
+            let csvContent = "\uFEFF"; 
+            csvContent += "Loại tài sản,Brand Name,Ngày giao dịch,Số lượng,Tổng giá mua (VND),Giá hiện tại/Đơn vị (VND),Giá trị hiện tại (VND),Lãi / Lỗ (VND)\n";
+            
+            let totalVon = 0, totalHienTai = 0;
+            db.forEach(item => {
+                const totalBuy = item.qty * item.buyPrice;
+                const totalCurrent = item.qty * item.currentPrice;
+                const profitLoss = totalCurrent - totalBuy;
+                totalVon += totalBuy; totalHienTai += totalCurrent;
+                csvContent += `"${item.type}","${item.brand}","${item.date}",${item.qty},${totalBuy},${item.currentPrice},${totalCurrent},${profitLoss}\n`;
+            });
+            csvContent += `\n,,,,Tổng vốn đầu tư,,${totalVon},\n,,,,Tổng giá trị hiện tại,,${totalHienTai},\n,,,,Tổng Lãi / Lỗ,,${totalLaiLo = totalHienTai - totalVon},\n`;
+
+            const boundary = 'foo_bar_baz';
+            const delimiter = "\r\n--" + boundary + "\r\n";
+            const close_delim = "\r\n--" + boundary + "--";
+
+            let metadata = {
+                'name': FILE_NAME,
+                'mimeType': 'text/csv'
+            };
+
+            let multipartRequestBody =
+                delimiter +
+                'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+                JSON.stringify(metadata) +
+                delimiter +
+                'Content-Type: text/csv; charset=UTF-8\r\n\r\n' +
+                csvContent +
+                close_delim;
+
+            if (targetFileId) {
+                // ĐÃ CÓ FILE -> PHÁT LỆNH GHI ĐÈ (UPDATE)
+                document.getElementById('driveStatus').innerText = "Trạng thái: Đang ghi đè dữ liệu mới lên file cũ...";
+                await gapi.client.request({
+                    'path': '/upload/drive/v3/files/' + targetFileId,
+                    'method': 'PATCH',
+                    'params': {'uploadType': 'multipart'},
+                    'headers': {'Content-Type': 'multipart/related; boundary=' + boundary},
+                    'body': multipartRequestBody
+                });
+                document.getElementById('driveStatus').innerText = `Trạng thái: Đã ghi đè file lên Drive an toàn lúc ${new Date().toLocaleTimeString()}!`;
+            } else {
+                // CHƯA CÓ FILE -> PHÁT LỆNH TẠO MỚI (CREATE)
+                document.getElementById('driveStatus').innerText = "Trạng thái: Đang tiến hành tạo file Sổ Gốc mới trên Drive...";
+                let resp = await gapi.client.request({
+                    'path': '/upload/drive/v3/files',
+                    'method': 'POST',
+                    'params': {'uploadType': 'multipart'},
+                    'headers': {'Content-Type': 'multipart/related; boundary=' + boundary},
+                    'body': multipartRequestBody
+                });
+                targetFileId = resp.result.id;
+                document.getElementById('driveStatus').innerText = `Trạng thái: Đã tạo thành công file Sổ gốc mới (ID: ${targetFileId})!`;
+            }
+            alert("Đã lưu trữ và đồng bộ file vĩnh viễn lên Google Drive thành công thưa bác!");
+        } catch (err) {
+            alert("Lỗi ghi file lên Drive: " + err.message);
+        }
+    }
+
+    // =========================================================================
+    // CÁC HÀM XỬ LÝ LOGIC GIAO DIỆN VÀ TÍNH TOÁN (GIỮ NGUYÊN TỪ V9)
+    // =========================================================================
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        const clickedBtn = document.querySelector(`button[onclick="switchTab('${tabName}')"]`);
+        if(clickedBtn) clickedBtn.classList.add('active');
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        if(tabName === 'summary') renderSummary();
+        else if(tabName === 'muaban') renderTradeLog();
+        else if(tabName === 'baocao') renderReport();
+    }
+
+    function refreshAllTabs() {
+        if(document.getElementById('tab-summary').classList.contains('active')) renderSummary();
+        if(document.getElementById('tab-muaban').classList.contains('active')) renderTradeLog();
+        if(document.getElementById('tab-baocao').classList.contains('active')) renderReport();
+        updateBrandSuggestions();
+    }
+
+    function formatCurrency(num) { return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num).replace('₫', 'đ'); }
+    function formatDateDisplay(dateStr) { if(!dateStr) return ''; const parts = dateStr.split('-'); return parts.length !== 3 ? dateStr : `${parts[2]}/${parts[1]}/${parts[0]}`; }
+    function getBadgeClass(type) { if(type === 'Vàng') return 'badge badge-vang'; if(type === 'Chứng khoán') return 'badge badge-ck'; if(type === 'Crypto') return 'badge badge-crypto'; return 'badge badge-tietkiem'; }
+
+    function updateBrandSuggestions() {
+        const datalist = document.getElementById('brandSuggestions'); datalist.innerHTML = '';
+        const uniqueBrands = [...new Set(db.map(item => item.brand))].sort();
+        uniqueBrands.forEach(brand => { const option = document.createElement('option'); option.value = brand; datalist.appendChild(option); });
+    }
+
+    function addAsset() {
+        const type = document.getElementById('assetType').value;
+        const brand = document.getElementById('assetBrand').value.trim().toUpperCase();
+        const qty = parseFloat(document.getElementById('assetQty').value);
+        const buyPrice = parseFloat(document.getElementById('assetBuyPrice').value);
+        let date = document.getElementById('assetDate').value;
+        if(!brand || isNaN(qty) || isNaN(buyPrice) || qty <= 0 || buyPrice <= 0) { alert("Bác nhập đủ thông tin hợp lệ ạ!"); return; }
+        if(!date) { const today = new Date(); date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`; }
+        const existingAsset = db.find(item => item.type === type && item.brand === brand);
+        db.push({ id: Date.now(), type: type, brand: brand, date: date, qty: qty, buyPrice: buyPrice, currentPrice: existingAsset ? existingAsset.currentPrice : buyPrice });
+        renderTradeLog(); updateBrandSuggestions();
+        document.getElementById('assetBrand').value = ''; document.getElementById('assetQty').value = ''; document.getElementById('assetBuyPrice').value = ''; document.getElementById('assetDate').value = '';
+    }
+
+    function deleteAsset(id) { if(confirm("Bác chắc chắn muốn xóa không?")) { db = db.filter(item => item.id !== id); renderTradeLog(); updateBrandSuggestions(); } }
+
+    function renderTradeLog() {
+        const tbody = document.getElementById('tradeLogTable'); tbody.innerHTML = '';
+        if(db.length === 0) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#64748b;">Chưa có dữ liệu nào.</td></tr>'; return; }
+        let sortedDb = [...db].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+        sortedDb.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td><span class="${getBadgeClass(item.type)}">${item.type}</span></td><td style="font-weight:bold;">${item.brand}</td><td>${formatDateDisplay(item.date)}</td><td>${item.qty}</td><td>${formatCurrency(item.buyPrice)}</td><td style="font-weight:500;">${formatCurrency(item.qty * item.buyPrice)}</td><td><button style="background:var(--danger); padding:4px 8px; font-size:0.8rem;" onclick="deleteAsset(${item.id})">Xóa</button></td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderSummary() {
+        const tbody = document.getElementById('summaryTable'); tbody.innerHTML = '';
+        const categories = ['Vàng', 'Chứng khoán', 'Crypto', 'Tiền tiết kiệm'];
+        let summaryMap = {}; categories.forEach(cat => summaryMap[cat] = { qty: 0, val: 0 });
+        db.forEach(item => { if(summaryMap[item.type]) { summaryMap[item.type].qty += item.qty; summaryMap[item.type].val += (item.qty * item.currentPrice); } });
+        let grandTotal = 0;
+        categories.forEach(cat => {
+            grandTotal += summaryMap[cat].val; const tr = document.createElement('tr');
+            tr.innerHTML = `<td><span class="${getBadgeClass(cat)}">${cat}</span></td><td style="font-weight:bold;">${summaryMap[cat].qty % 1 === 0 ? summaryMap[cat].qty : summaryMap[cat].qty.toFixed(4)}</td><td style="font-weight:bold; color:var(--primary);">${formatCurrency(summaryMap[cat].val)}</td>`;
+            tbody.appendChild(tr);
+        });
+        document.getElementById('grandTotalSummaryBox').innerText = `Tổng tài sản: ${formatCurrency(grandTotal)}`;
+    }
+
+    function renderQuickPriceUpdater() {
+        const tbody = document.getElementById('quickPriceUpdaterTable'); tbody.innerHTML = '';
+        let uniqueGroup = [];
+        db.forEach(item => { if(!uniqueGroup.some(g => g.type === item.type && g.brand === item.brand)) uniqueGroup.push({ type: item.type, brand: item.brand, currentPrice: item.currentPrice }); });
+        if(uniqueGroup.length === 0) { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#64748b;">Chưa có dữ liệu.</td></tr>'; return; }
+        uniqueGroup.forEach(group => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td><span class="${getBadgeClass(group.type)}">${group.type}</span></td><td style="font-weight:bold;">${group.brand}</td><td><input type="number" class="input-inline-edit" value="${group.currentPrice}" oninput="updateGlobalPrice(this, '${group.type}', '${group.brand}')"></td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function updateGlobalPrice(inputEl, type, brand) {
+        const newPrice = parseFloat(inputEl.value) || 0;
+        db.forEach(item => { if(item.type === type && item.brand === brand) item.currentPrice = newPrice; });
+        renderReportDetailsOnly();
+    }
+
+    function renderReport() { renderQuickPriceUpdater(); renderReportDetailsOnly(); }
+
+    function renderReportDetailsOnly() {
+        const filterType = document.getElementById('filterType').value;
+        const filterBrand = document.getElementById('filterBrand').value.trim().toUpperCase();
+        const tbody = document.getElementById('reportTable'); tbody.innerHTML = '';
+        let filtered = db.filter(item => (filterType === 'Tất cả' || item.type === filterType) && (!filterBrand || item.brand.includes(filterBrand)));
+        if(filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#64748b;">Không có dữ liệu.</td></tr>'; recalculateSummaryTotals(); return; }
+        filtered.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+        filtered.forEach(item => {
+            const totalBuy = item.qty * item.buyPrice; const totalCurrent = item.qty * item.currentPrice; const pl = totalCurrent - totalBuy;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td><span class="${getBadgeClass(item.type)}">${item.type}</span></td><td style="font-weight:bold;">${item.brand}</td><td>${formatDateDisplay(item.date)}</td><td>${item.qty}</td><td>${formatCurrency(totalBuy)}</td><td>${formatCurrency(item.currentPrice)}</td><td style="font-weight:500;">${formatCurrency(totalCurrent)}</td><td class="${pl > 0 ? 'text-success' : (pl < 0 ? 'text-danger' : '')}">${pl === 0 ? '0 đ' : (pl > 0 ? '+' : '') + formatCurrency(pl)}</td>`;
+            tbody.appendChild(tr);
+        });
+        recalculateSummaryTotals();
+    }
+
+    function recalculateSummaryTotals() {
+        let totalVon = 0, totalHienTai = 0;
+        db.forEach(item => { totalVon += item.qty * item.buyPrice; totalHienTai += item.qty * item.currentPrice; });
+        document.getElementById('totalVonClick').innerText = formatCurrency(totalVon);
+        document.getElementById('totalHienTaiClick').innerText = formatCurrency(totalHienTai);
+        const totalLaiLoEl = document.getElementById('totalLaiLoClick'); const tl = totalHienTai - totalVon;
+        totalLaiLoEl.innerText = tl === 0 ? '0 đ' : (tl > 0 ? '+' : '') + formatCurrency(tl);
+        totalLaiLoEl.className = tl > 0 ? 'text-success' : (tl < 0 ? 'text-danger' : '');
+    }
+
+    function clearAllData() { if(confirm("Xóa trống dữ liệu tạm màn hình?")) { db = []; refreshAllTabs(); } }
+</script>
+
+</body>
+</html>
