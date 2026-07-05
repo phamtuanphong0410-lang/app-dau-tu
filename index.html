@@ -3,30 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Danh Mục Đầu Tư Mr.Mike</title>
+    <title>Quản Lý Danh Mục Đầu Tư Google Drive V12</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
     <style>
         :root {
-            --primary: #2563eb;
-            --success: #16a34a;
-            --danger: #dc2626;
-            --warning: #ea580c;
-            --google-color: #db4437;
-            --background: #f8fafc;
-            --text: #1e293b;
-            --card-bg: #ffffff;
+            --primary: #2563eb; --success: #16a34a; --danger: #dc2626; 
+            --warning: #ea580c; --google-color: #db4437; --background: #f8fafc; 
+            --text: #1e293b; --card-bg: #ffffff;
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--background); color: var(--text); margin: 0; padding: 0;
-        }
-        #loginScreen {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh; padding: 20px; box-sizing: border-box;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--background); color: var(--text); margin: 0; padding: 0; }
+        #loginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; box-sizing: border-box; }
         #mainScreen { display: none; }
-        .container { max-width: 900px; margin: 0 auto; padding: 16px; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 16px; }
         .card { background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         h2 { margin-top: 0; font-size: 1.2rem; color: #0f172a; margin-bottom: 12px; }
         .tabs { display: flex; background: #e2e8f0; border-radius: 8px; padding: 4px; margin-bottom: 16px; }
@@ -64,7 +53,7 @@
             <input type="password" id="passwordInput" placeholder="Nhập mật khẩu..." style="text-align: center;">
         </div>
         <button class="btn-block" onclick="checkPassword()">Đăng Nhập</button>
-        <p id="loginError" style="color: var(--danger); font-size: 0.85rem; margin-top: 10px; display: none;">Mật khẩu không chính xác, thưa bác!</p>
+        <p id="loginError" style="color: var(--danger); font-size: 0.85rem; margin-top: 10px; display: none;">Mật khẩu không chính xác!</p>
     </div>
 </div>
 
@@ -73,9 +62,7 @@
         
         <div class="card" style="border-left: 5px solid var(--google-color);">
             <h2>☁️ Đồng Bộ Bộ Nhớ Google Drive</h2>
-            <p style="font-size: 0.85rem; color: #64748b; margin-top: -6px;">
-                Kết nối với tài khoản Google để tự động đọc và ghi đè file dữ liệu <strong>đầu tư gốc</strong> trực tiếp trên đám mây.
-            </p>
+            <p style="font-size: 0.85rem; color: #64748b; margin-top: -6px;">Kết nối Google để nạp và lưu tự động hằng ngày.</p>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button id="authBtn" onclick="handleAuthClick()" style="background-color: var(--google-color);">🔐 1. Kết Nối Tài Khoản Google</button>
                 <button id="syncLoadBtn" onclick="loadFromDrive()" style="background-color: var(--warning);" disabled>📥 2. Nạp Bản Gốc Từ Drive</button>
@@ -92,7 +79,7 @@
 
         <div id="tab-summary" class="tab-content active">
             <div class="card" style="border-top: 4px solid var(--success);">
-                <h2>📊 Bảng Tổng Hợp Tài Sản (Summary Board)</h2>
+                <h2>📊 Bảng Tổng Hợp Danh Mục Tài Sản (Summary Board)</h2>
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -105,8 +92,30 @@
                         <tbody id="summaryTable"></tbody>
                     </table>
                 </div>
-                <div id="grandTotalSummaryBox" style="margin-top: 20px; border-top: 3px double #cbd5e1; padding-top: 14px; text-align: right; font-weight: bold; font-size: 1.3rem; color: var(--primary);">
+                <div id="grandTotalSummaryBox" style="margin-top: 16px; border-top: 3px double #cbd5e1; padding-top: 10px; text-align: right; font-weight: bold; font-size: 1.2rem; color: var(--primary);">
                     Tổng tài sản: 0 đ
+                </div>
+            </div>
+
+            <div class="card" style="border-top: 4px solid var(--primary);">
+                <h2>📈 Hiệu Suất Đầu Tư Chi Tiết Theo Thương Hiệu</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Loại tài sản</th>
+                                <th>Thương hiệu</th>
+                                <th>Số lượng</th>
+                                <th>Trung bình giá / 1</th>
+                                <th>Giá hiện tại / 1</th>
+                                <th>Tổng giá mua</th>
+                                <th>Tổng giá hiện tại</th>
+                                <th>Lãi / Lỗ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryBrandTable">
+                            </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -148,7 +157,7 @@
             </div>
 
             <div class="card">
-                <h2>Danh Sách Giao Dịch Hiện Tại (Ngày mới nhất xếp đầu)</h2>
+                <h2>Danh Sách Giao Dịch Hiện Tại</h2>
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -209,6 +218,7 @@
                                 <th>Brand Name</th>
                                 <th>Ngày GD</th>
                                 <th>Số lượng</th>
+                                <th>Giá mua/Đơn vị</th>
                                 <th>Tổng giá mua</th>
                                 <th>Giá hiện tại</th>
                                 <th>Giá trị hiện tại</th>
@@ -230,19 +240,12 @@
 
 <script>
     // =========================================================================
-    // 🎛️ BÁC CẦN ĐIỀN THÔNG TIN BẢO MẬT CỦA BÁC VÀO ĐÂY ĐỂ ĐỒNG BỘ ĐƯỢC DRIVE
-    // =========================================================================
-    const FIXED_PASSWORD = "phongvan1!"; // Mật khẩu đăng nhập ứng dụng
+    const FIXED_PASSWORD = "phongvan1!";
     const CLIENT_ID = "393045823194-vmppb76eo9j48p83s136j2i2ltjdb13m.apps.googleusercontent.com"; // Điền Client ID từ Google Cloud Console
+    // =========================================================================
     
-    // Các quyền truy cập cần thiết (Chỉ xin quyền quản lý các file do chính App này tạo ra trên Drive của bác)
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-    
-    let db = [];
-    let tokenClient;
-    let gapiInited = false;
-    let gisiInited = false;
-    let targetFileId = null; // ID của file Excel trên Drive của bác
+    let db = []; let tokenClient; let gapiInited = false; let gisiInited = false; let targetFileId = null;
     const FILE_NAME = "Sổ_Gốc_Đầu_Tư_Đám_Mây.csv";
 
     function checkPassword() {
@@ -251,196 +254,89 @@
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainScreen').style.display = 'block';
             initApp();
-        } else {
-            document.getElementById('loginError').style.display = 'block';
-        }
+        } else { document.getElementById('loginError').style.display = 'block'; }
     }
 
-    // Khởi tạo thư viện API của Google khi mở App
     function initApp() {
         gapi.load('client', async () => {
-            await gapi.client.init({
-                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-            });
-            gapiInited = true;
-            checkLibraryLoad();
+            await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
+            gapiInited = true; checkLibraryLoad();
         });
-
         tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: SCOPES,
+            client_id: CLIENT_ID, scope: SCOPES,
             callback: (resp) => {
                 if (resp.error !== undefined) { throw (resp); }
-                document.getElementById('syncLoadBtn').disabled = false;
-                document.getElementById('syncSaveBtn').disabled = false;
+                document.getElementById('syncLoadBtn').disabled = false; document.getElementById('syncSaveBtn').disabled = false;
                 document.getElementById('authBtn').innerText = "🔄 Đã Kết Nối Google";
                 document.getElementById('driveStatus').innerText = "Trạng thái: Kết nối tài khoản thành công. Sẵn sàng nạp/lưu file.";
-                // Tự động quét tìm file trên Drive sau khi đăng nhập
                 findOrCreateFileOnDrive();
             },
         });
-        gisiInited = true;
-        checkLibraryLoad();
+        gisiInited = true; checkLibraryLoad();
     }
 
-    function checkLibraryLoad() {
-        if (gapiInited && gisiInited) {
-            document.getElementById('driveStatus').innerText = "Trạng thái: Thư viện Google đã nạp. Hãy bấm nút Kết nối tài khoản.";
-        }
-    }
+    function checkLibraryLoad() { if (gapiInited && gisiInited) { document.getElementById('driveStatus').innerText = "Trạng thái: Thư viện Google đã nạp. Hãy bấm Kết nối tài khoản."; } }
+    function handleAuthClick() { if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'}); else tokenClient.requestAccessToken({prompt: ''}); }
 
-    function handleAuthClick() {
-        // Gọi bảng đăng nhập tài khoản Google của máy bác
-        if (gapi.client.getToken() === null) {
-            tokenClient.requestAccessToken({prompt: 'consent'});
-        } else {
-            tokenClient.requestAccessToken({prompt: ''});
-        }
-    }
-
-    // TÌM HOẶC TỰ TẠO FILE SỔ GỐC TRÊN GOOGLE DRIVE
     async function findOrCreateFileOnDrive() {
         try {
             document.getElementById('driveStatus').innerText = "Trạng thái: Đang quét tìm file Sổ Gốc trên Drive...";
-            let response = await gapi.client.drive.files.list({
-                q: `name = '${FILE_NAME}' and trashed = false`,
-                fields: 'files(id, name)',
-                spaces: 'drive'
-            });
+            let response = await gapi.client.drive.files.list({ q: `name = '${FILE_NAME}' and trashed = false`, fields: 'files(id, name)', spaces: 'drive' });
             let files = response.result.files;
             if (files && files.length > 0) {
-                targetFileId = files[0].id;
-                document.getElementById('driveStatus').innerText = `Trạng thái: Đã thấy file Sổ gốc trên Drive (ID: ${targetFileId}). Hãy bấm Nạp Dữ Liệu.`;
-            } else {
-                document.getElementById('driveStatus').innerText = "Trạng thái: Chưa có file trên Drive. App sẽ tự tạo file khi bác bấm 'Lưu Đè Lên Drive'.";
-            }
-        } catch (err) {
-            document.getElementById('driveStatus').innerText = "Lỗi quét file: " + err.message;
-        }
+                targetFileId = files[0].id; document.getElementById('driveStatus').innerText = `Trạng thái: Đã thấy file Sổ gốc trên Drive. Hãy bấm Nạp Dữ Liệu.`;
+            } else { document.getElementById('driveStatus').innerText = "Trạng thái: Chưa có file trên Drive. App sẽ tự tạo file khi lưu."; }
+        } catch (err) { document.getElementById('driveStatus').innerText = "Lỗi quét file: " + err.message; }
     }
 
-    // 📥 ĐỌC DỮ LIỆU TỪ FILE TRÊN GOOGLE DRIVE NẠP VÀO APP
     async function loadFromDrive() {
-        if (!targetFileId) {
-            alert("Chưa thấy file nào tên '" + FILE_NAME + "' trên Drive của bác để nạp cả ạ! Bác vui lòng nhập dữ liệu rồi bấm nút số 3 để Tạo file mới trước nhé.");
-            return;
-        }
+        if (!targetFileId) { alert("Chưa có file Sổ Gốc trên Drive!"); return; }
         try {
             document.getElementById('driveStatus').innerText = "Trạng thái: Đang tải dữ liệu từ đám mây...";
-            let resp = await gapi.client.drive.files.get({
-                fileId: targetFileId,
-                alt: 'media'
-            });
-            
-            let text = resp.body;
-            if (text.startsWith('\uFEFF')) text = text.substring(1);
-            
-            const lines = text.split('\n');
-            let importedDb = [];
-            
+            let resp = await gapi.client.drive.files.get({ fileId: targetFileId, alt: 'media' });
+            let text = resp.body; if (text.startsWith('\uFEFF')) text = text.substring(1);
+            const lines = text.split('\n'); let importedDb = [];
             for (let i = 1; i < lines.length; i++) {
-                let line = lines[i].trim();
-                if (!line || line.startsWith(',')) break; 
+                let line = lines[i].trim(); if (!line || line.startsWith(',')) break; 
                 let cols = line.split(',').map(c => c.replace(/^"|"$/g, ''));
-                if (cols.length >= 6) {
-                    let type = cols[0];
-                    let brand = cols[1];
-                    let date = cols[2];
-                    let qty = parseFloat(cols[3]);
-                    let totalBuy = parseFloat(cols[4]);
-                    let currentPrice = parseFloat(cols[5]);
-                    let buyPrice = qty > 0 ? totalBuy / qty : 0;
-                    
+                if (cols.length >= 7) { 
+                    let type = cols[0]; let brand = cols[1]; let date = cols[2]; let qty = parseFloat(cols[3]); let buyPrice = parseFloat(cols[4]); let totalBuy = parseFloat(cols[5]); let currentPrice = parseFloat(cols[6]);
                     if (type && brand && !isNaN(qty)) {
-                        importedDb.push({
-                            id: Date.now() + i,
-                            type: type, brand: brand, date: date, qty: qty,
-                            buyPrice: buyPrice, currentPrice: isNaN(currentPrice) ? buyPrice : currentPrice
-                        });
+                        importedDb.push({ id: Date.now() + i, type: type, brand: brand, date: date, qty: qty, buyPrice: buyPrice, currentPrice: isNaN(currentPrice) ? buyPrice : currentPrice });
                     }
                 }
             }
-            db = importedDb;
-            refreshAllTabs();
-            document.getElementById('driveStatus').innerText = `Trạng thái: Đã nạp xong ${db.length} tài sản từ file đám mây lúc ${new Date().toLocaleTimeString()}!`;
-            alert("Đã đồng bộ thành công dữ liệu từ Google Drive của bác!");
-        } catch (err) {
-            alert("Lỗi nạp file: " + err.message);
-        }
+            db = importedDb; refreshAllTabs();
+            document.getElementById('driveStatus').innerText = `Trạng thái: Đã nạp xong ${db.length} tài sản!`;
+        } catch (err) { alert("Lỗi nạp file: " + err.message); }
     }
 
-    // 💾 GHI ĐÈ / TẠO MỚI DỮ LIỆU LÊN FILE TRÊN GOOGLE DRIVE
     async function saveToDrive() {
-        if (db.length === 0) {
-            alert("Bộ nhớ tạm đang trống, không có dữ liệu để lưu thưa bác!");
-            return;
-        }
+        if (db.length === 0) { alert("Bộ nhớ tạm trống!"); return; }
         try {
-            document.getElementById('driveStatus').innerText = "Trạng thái: Đang chuẩn bị gói dữ liệu gửi lên Drive...";
-            let csvContent = "\uFEFF"; 
-            csvContent += "Loại tài sản,Brand Name,Ngày giao dịch,Số lượng,Tổng giá mua (VND),Giá hiện tại/Đơn vị (VND),Giá trị hiện tại (VND),Lãi / Lỗ (VND)\n";
-            
+            document.getElementById('driveStatus').innerText = "Trạng thái: Đang chuẩn bị gửi lên Drive...";
+            let csvContent = "\uFEFF"; csvContent += "Loại tài sản,Brand Name,Ngày giao dịch,Số lượng,Giá mua/Đơn vị (VND),Tổng giá mua (VND),Giá hiện tại/Đơn vị (VND),Giá trị hiện tại (VND),Lãi / Lỗ (VND)\n";
             let totalVon = 0, totalHienTai = 0;
-            db.forEach(item => {
-                const totalBuy = item.qty * item.buyPrice;
-                const totalCurrent = item.qty * item.currentPrice;
-                const profitLoss = totalCurrent - totalBuy;
+            let sortedDbForExport = [...db].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+            sortedDbForExport.forEach(item => {
+                const totalBuy = item.qty * item.buyPrice; const totalCurrent = item.qty * item.currentPrice; const profitLoss = totalCurrent - totalBuy;
                 totalVon += totalBuy; totalHienTai += totalCurrent;
-                csvContent += `"${item.type}","${item.brand}","${item.date}",${item.qty},${totalBuy},${item.currentPrice},${totalCurrent},${profitLoss}\n`;
+                csvContent += `"${item.type}","${item.brand}","${item.date}",${item.qty},${item.buyPrice},${totalBuy},${item.currentPrice},${totalCurrent},${profitLoss}\n`;
             });
-            csvContent += `\n,,,,Tổng vốn đầu tư,,${totalVon},\n,,,,Tổng giá trị hiện tại,,${totalHienTai},\n,,,,Tổng Lãi / Lỗ,,${totalLaiLo = totalHienTai - totalVon},\n`;
-
-            const boundary = 'foo_bar_baz';
-            const delimiter = "\r\n--" + boundary + "\r\n";
-            const close_delim = "\r\n--" + boundary + "--";
-
-            let metadata = {
-                'name': FILE_NAME,
-                'mimeType': 'text/csv'
-            };
-
-            let multipartRequestBody =
-                delimiter +
-                'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-                JSON.stringify(metadata) +
-                delimiter +
-                'Content-Type: text/csv; charset=UTF-8\r\n\r\n' +
-                csvContent +
-                close_delim;
-
+            csvContent += `\n,,,,,Tổng vốn đầu tư,,${totalVon},\n,,,,,Tổng giá trị hiện tại,,${totalHienTai},\n,,,,,Tổng Lãi / Lỗ,,${totalHienTai - totalVon},\n`;
+            const boundary = 'foo_bar_baz'; const delimiter = "\r\n--" + boundary + "\r\n"; const close_delim = "\r\n--" + boundary + "--";
+            let metadata = { 'name': FILE_NAME, 'mimeType': 'text/csv' };
+            let multipartRequestBody = delimiter + 'Content-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(metadata) + delimiter + 'Content-Type: text/csv; charset=UTF-8\r\n\r\n' + csvContent + close_delim;
             if (targetFileId) {
-                // ĐÃ CÓ FILE -> PHÁT LỆNH GHI ĐÈ (UPDATE)
-                document.getElementById('driveStatus').innerText = "Trạng thái: Đang ghi đè dữ liệu mới lên file cũ...";
-                await gapi.client.request({
-                    'path': '/upload/drive/v3/files/' + targetFileId,
-                    'method': 'PATCH',
-                    'params': {'uploadType': 'multipart'},
-                    'headers': {'Content-Type': 'multipart/related; boundary=' + boundary},
-                    'body': multipartRequestBody
-                });
-                document.getElementById('driveStatus').innerText = `Trạng thái: Đã ghi đè file lên Drive an toàn lúc ${new Date().toLocaleTimeString()}!`;
+                await gapi.client.request({ 'path': '/upload/drive/v3/files/' + targetFileId, 'method': 'PATCH', 'params': {'uploadType': 'multipart'}, 'headers': {'Content-Type': 'multipart/related; boundary=' + boundary}, 'body': multipartRequestBody });
             } else {
-                // CHƯA CÓ FILE -> PHÁT LỆNH TẠO MỚI (CREATE)
-                document.getElementById('driveStatus').innerText = "Trạng thái: Đang tiến hành tạo file Sổ Gốc mới trên Drive...";
-                let resp = await gapi.client.request({
-                    'path': '/upload/drive/v3/files',
-                    'method': 'POST',
-                    'params': {'uploadType': 'multipart'},
-                    'headers': {'Content-Type': 'multipart/related; boundary=' + boundary},
-                    'body': multipartRequestBody
-                });
+                let resp = await gapi.client.request({ 'path': '/upload/drive/v3/files', 'method': 'POST', 'params': {'uploadType': 'multipart'}, 'headers': {'Content-Type': 'multipart/related; boundary=' + boundary}, 'body': multipartRequestBody });
                 targetFileId = resp.result.id;
-                document.getElementById('driveStatus').innerText = `Trạng thái: Đã tạo thành công file Sổ gốc mới (ID: ${targetFileId})!`;
             }
-            alert("Đã lưu trữ và đồng bộ file vĩnh viễn lên Google Drive thành công thưa bác!");
-        } catch (err) {
-            alert("Lỗi ghi file lên Drive: " + err.message);
-        }
+            document.getElementById('driveStatus').innerText = "Trạng thái: Đã lưu thành công lên Drive!";
+        } catch (err) { alert("Lỗi ghi file: " + err.message); }
     }
 
-    // =========================================================================
-    // CÁC HÀM XỬ LÝ LOGIC GIAO DIỆN VÀ TÍNH TOÁN (GIỮ NGUYÊN TỪ V9)
-    // =========================================================================
     function switchTab(tabName) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -496,7 +392,9 @@
         });
     }
 
+    // NÂNG CẤP HÀM: Vẽ đồng thời 2 bảng ở màn hình SUMMARY
     function renderSummary() {
+        // --- BẢNG 1: TỔNG HỢP THEO NHÓM LỚN (Đã có sẵn) ---
         const tbody = document.getElementById('summaryTable'); tbody.innerHTML = '';
         const categories = ['Vàng', 'Chứng khoán', 'Crypto', 'Tiền tiết kiệm'];
         let summaryMap = {}; categories.forEach(cat => summaryMap[cat] = { qty: 0, val: 0 });
@@ -508,6 +406,83 @@
             tbody.appendChild(tr);
         });
         document.getElementById('grandTotalSummaryBox').innerText = `Tổng tài sản: ${formatCurrency(grandTotal)}`;
+
+        // --- BẢNG 2 (MỚI THÊM): BẢNG PHỤ CHI TIẾT TỪNG THƯƠNG HIỆU ---
+        const brandTbody = document.getElementById('summaryBrandTable');
+        brandTbody.innerHTML = '';
+
+        // Tiến hành gom nhóm dữ liệu theo (Loại tài sản + Thương hiệu)
+        let brandMap = {};
+        db.forEach(item => {
+            const key = `${item.type}|${item.brand}`;
+            if (!brandMap[key]) {
+                brandMap[key] = {
+                    type: item.type,
+                    brand: item.brand,
+                    totalQty: 0,
+                    totalBuyCost: 0,
+                    currentPrice: item.currentPrice
+                };
+            }
+            brandMap[key].totalQty += item.qty;
+            brandMap[key].totalBuyCost += (item.qty * item.buyPrice);
+            brandMap[key].currentPrice = item.currentPrice; // Đồng bộ mức giá hiện tại mới nhất
+        });
+
+        let sortedKeys = Object.keys(brandMap).sort();
+        if(sortedKeys.length === 0) {
+            brandTbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#64748b;">Chưa có dữ liệu chi tiết thương hiệu thưa bác.</td></tr>';
+            return;
+        }
+
+        // Biến tích lũy để tính dòng Row Total ở cuối bảng
+        let totalBuyAll = 0, totalCurrentAll = 0, totalPLAll = 0;
+
+        sortedKeys.forEach(key => {
+            const g = brandMap[key];
+            const avgBuyPrice = g.totalQty > 0 ? g.totalBuyCost / g.totalQty : 0; // Tính trung bình giá mua gốc
+            const totalCurrentValue = g.totalQty * g.currentPrice; // Tổng giá trị hiện tại ngày hôm nay
+            const pl = totalCurrentValue - g.totalBuyCost; // Tính toán Lãi / Lỗ cụ thể
+
+            totalBuyAll += g.totalBuyCost;
+            totalCurrentAll += totalCurrentValue;
+            totalPLAll += pl;
+
+            let plClass = pl > 0 ? 'text-success' : (pl < 0 ? 'text-danger' : '');
+            let plText = pl === 0 ? '0 đ' : (pl > 0 ? '+' : '') + formatCurrency(pl);
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><span class="${getBadgeClass(g.type)}">${g.type}</span></td>
+                <td style="font-weight:bold;">${g.brand}</td>
+                <td>${g.totalQty % 1 === 0 ? g.totalQty : g.totalQty.toFixed(4)}</td>
+                <td>${formatCurrency(avgBuyPrice)}</td>
+                <td>${formatCurrency(g.currentPrice)}</td>
+                <td>${formatCurrency(g.totalBuyCost)}</td>
+                <td style="font-weight:500; color:var(--primary);">${formatCurrency(totalCurrentValue)}</td>
+                <td class="${plClass}">${plText}</td>
+            `;
+            brandTbody.appendChild(tr);
+        });
+
+        // THÊM DÒNG CUỐI: ROW TOTAL TỔNG CỘNG CỦA BẢNG PHỤ
+        const totalTr = document.createElement('tr');
+        totalTr.style.fontWeight = 'bold';
+        totalTr.style.background = '#f1f5f9';
+        
+        let tPLClass = totalPLAll > 0 ? 'text-success' : (totalPLAll < 0 ? 'text-danger' : '');
+        let tPLText = totalPLAll === 0 ? '0 đ' : (totalPLAll > 0 ? '+' : '') + formatCurrency(totalPLAll);
+
+        totalTr.innerHTML = `
+            <td colspan="2" style="color: #0f172a;">TỔNG CỘNG (ROW TOTAL)</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>${formatCurrency(totalBuyAll)}</td>
+            <td style="color:var(--primary);">${formatCurrency(totalCurrentAll)}</td>
+            <td class="${tPLClass}">${tPLText}</td>
+        `;
+        brandTbody.appendChild(totalTr);
     }
 
     function renderQuickPriceUpdater() {
@@ -518,6 +493,7 @@
         uniqueGroup.forEach(group => {
             const tr = document.createElement('tr');
             tr.innerHTML = `<td><span class="${getBadgeClass(group.type)}">${group.type}</span></td><td style="font-weight:bold;">${group.brand}</td><td><input type="number" class="input-inline-edit" value="${group.currentPrice}" oninput="updateGlobalPrice(this, '${group.type}', '${group.brand}')"></td>`;
+            tbody.appendChild(group); // Sửa lỗi trình duyệt: append dòng tr vào bảng
             tbody.appendChild(tr);
         });
     }
@@ -535,12 +511,12 @@
         const filterBrand = document.getElementById('filterBrand').value.trim().toUpperCase();
         const tbody = document.getElementById('reportTable'); tbody.innerHTML = '';
         let filtered = db.filter(item => (filterType === 'Tất cả' || item.type === filterType) && (!filterBrand || item.brand.includes(filterBrand)));
-        if(filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#64748b;">Không có dữ liệu.</td></tr>'; recalculateSummaryTotals(); return; }
+        if(filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#64748b;">Không có dữ liệu.</td></tr>'; recalculateSummaryTotals(); return; }
         filtered.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
         filtered.forEach(item => {
             const totalBuy = item.qty * item.buyPrice; const totalCurrent = item.qty * item.currentPrice; const pl = totalCurrent - totalBuy;
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td><span class="${getBadgeClass(item.type)}">${item.type}</span></td><td style="font-weight:bold;">${item.brand}</td><td>${formatDateDisplay(item.date)}</td><td>${item.qty}</td><td>${formatCurrency(totalBuy)}</td><td>${formatCurrency(item.currentPrice)}</td><td style="font-weight:500;">${formatCurrency(totalCurrent)}</td><td class="${pl > 0 ? 'text-success' : (pl < 0 ? 'text-danger' : '')}">${pl === 0 ? '0 đ' : (pl > 0 ? '+' : '') + formatCurrency(pl)}</td>`;
+            tr.innerHTML = `<td><span class="${getBadgeClass(item.type)}">${item.type}</span></td><td style="font-weight:bold;">${item.brand}</td><td>${formatDateDisplay(item.date)}</td><td>${item.qty}</td><td>${formatCurrency(item.buyPrice)}</td><td>${formatCurrency(totalBuy)}</td><td>${formatCurrency(item.currentPrice)}</td><td style="font-weight:500;">${formatCurrency(totalCurrent)}</td><td class="${pl > 0 ? 'text-success' : (pl < 0 ? 'text-danger' : '')}">${pl === 0 ? '0 đ' : (pl > 0 ? '+' : '') + formatCurrency(pl)}</td>`;
             tbody.appendChild(tr);
         });
         recalculateSummaryTotals();
@@ -555,8 +531,6 @@
         totalLaiLoEl.innerText = tl === 0 ? '0 đ' : (tl > 0 ? '+' : '') + formatCurrency(tl);
         totalLaiLoEl.className = tl > 0 ? 'text-success' : (tl < 0 ? 'text-danger' : '');
     }
-
-    function clearAllData() { if(confirm("Xóa trống dữ liệu tạm màn hình?")) { db = []; refreshAllTabs(); } }
 </script>
 
 </body>
