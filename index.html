@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Danh Mục Đầu Tư Google Drive V15</title>
+    <title>Quản Lý Danh Mục Đầu Tư Google Drive V16</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
     <style>
@@ -42,65 +42,40 @@
         .filter-zone { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
         .input-inline-edit { width: 120px; padding: 6px; font-size: 0.9rem; border: 1px solid var(--primary); }
 
-        /* MỚI: CSS CHO 2 CÂU ĐỐI TÀI LỘC DỌC 2 BÊN */
-        .cau-doi {
+        /* CSS TÁCH ẢNH CÂU ĐỐI THÀNH 2 NỬA */
+        .cau-doi-img {
             position: fixed;
             top: 50%;
             transform: translateY(-50%);
-            width: 60px;
-            background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%);
-            color: #ffd700;
-            font-weight: bold;
-            font-size: 1.4rem;
-            text-align: center;
-            padding: 25px 8px;
-            border-radius: 8px;
-            border: 3px solid #fbbf24;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 0 10px rgba(251, 191, 36, 0.4);
+            width: 170px; /* Chiều rộng mỗi bên */
+            height: 600px; /* Chiều cao mỗi bên */
+            background-image: url('caudoi.jpg'); /* Đọc file ảnh bác vừa tải lên */
+            background-size: 200% 100%; /* Phóng to ảnh gấp đôi theo chiều ngang để dễ cắt */
+            background-repeat: no-repeat;
             z-index: 5;
-            line-height: 1.6;
-            font-family: "Times New Roman", serif;
-            text-transform: uppercase;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            border-radius: 8px;
         }
-        .cau-doi-left { left: 25px; }
-        .cau-doi-right { right: 25px; }
-        .cau-doi span { display: block; margin-bottom: 4px; }
-        .cau-doi .khoang-cach { height: 15px; display: block; } /* Khoảng cách giữa 2 vế */
+        .cau-doi-left {
+            left: 20px;
+            background-position: left center; /* Lấy chính xác nửa bên trái của ảnh */
+        }
+        .cau-doi-right {
+            right: 20px;
+            background-position: right center; /* Lấy chính xác nửa bên phải của ảnh */
+        }
 
-        /* Ẩn câu đối trên màn hình hẹp (dưới 1200px như S25 Ultra màn hình dọc) để không che ứng dụng */
-        @media (max-width: 1200px) {
-            .cau-doi { display: none; }
+        /* Ẩn ảnh khi màn hình nhỏ (như điện thoại) để không che nội dung */
+        @media (max-width: 1350px) {
+            .cau-doi-img { display: none; }
         }
     </style>
 </head>
 <body>
 
-<!-- CÂU ĐỐI BÊN TRÁI -->
-<div class="cau-doi cau-doi-left">
-    <span>ĐẦU</span>
-    <span>TƯ</span>
-    <span>ĐẮC</span>
-    <span>LỢI</span>
-    <span class="khoang-cach"></span>
-    <span>TÀI</span>
-    <span>NHƯ</span>
-    <span>THỦY</span>
-</div>
+<div class="cau-doi-img cau-doi-left"></div>
+<div class="cau-doi-img cau-doi-right"></div>
 
-<!-- CÂU ĐỐI BÊN PHẢI -->
-<div class="cau-doi cau-doi-right">
-    <span>TÍCH</span>
-    <span>LŨY</span>
-    <span>THÀNH</span>
-    <span>CÔNG</span>
-    <span class="khoang-cach"></span>
-    <span>LỘC</span>
-    <span>MÃN</span>
-    <span>ĐƯỜNG</span>
-</div>
-
-<!-- 1. MÀN HÌNH ĐĂNG NHẬP CHÍNH -->
 <div id="loginScreen">
     <div class="card" style="width: 100%; max-width: 360px; text-align: center; position: relative; z-index: 10;">
         <h2 style="font-size: 1.4rem; margin-bottom: 8px;">Hệ Thống Đầu Tư</h2>
@@ -113,11 +88,9 @@
     </div>
 </div>
 
-<!-- 2. MÀN HÌNH CHÍNH SỬ DỤNG -->
 <div id="mainScreen">
     <div class="container">
         
-        <!-- KHU VỰC KẾT NỐI VÀ ĐỒNG BỘ GOOGLE DRIVE -->
         <div class="card" style="border-left: 5px solid var(--google-color);">
             <h2>☁️ Đồng Bộ Bộ Nhớ Google Drive</h2>
             <p style="font-size: 0.85rem; color: #64748b; margin-top: -6px;">Kết nối Google để nạp và lưu tự động hằng ngày.</p>
@@ -129,14 +102,12 @@
             <p id="driveStatus" style="font-size: 0.85rem; font-weight: 500; color: #475569; margin-top: 10px; margin-bottom: 0;">Trạng thái: Chưa kết nối tài khoản.</p>
         </div>
 
-        <!-- THANH ĐIỀU HƯỚNG TAB -->
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('summary')">Tổng Quan (Summary)</button>
             <button class="tab-btn" onclick="switchTab('muaban')">Mua / Bán Tài Sản</button>
             <button class="tab-btn" onclick="switchTab('baocao')">Báo Cáo Chi Tiết</button>
         </div>
 
-        <!-- TAB 1: SUMMARY -->
         <div id="tab-summary" class="tab-content active">
             <div class="card" style="border-top: 4px solid var(--success);">
                 <h2>📊 Bảng Tổng Hợp Danh Mục Tài Sản (Summary Board)</h2>
@@ -179,7 +150,6 @@
             </div>
         </div>
 
-        <!-- TAB 2: MUA / BÁN -->
         <div id="tab-muaban" class="tab-content">
             <div class="card" id="assetFormCard">
                 <h2 id="formTitle">Nhập Tài Sản Mới (Mua vào)</h2>
@@ -237,7 +207,6 @@
             </div>
         </div>
 
-        <!-- TAB 3: BÁO CÁO CHI TIẾT -->
         <div id="tab-baocao" class="tab-content">
             <div class="card" style="border-top: 4px solid var(--primary);">
                 <h2>📊 Cập Nhật Nhanh Giá Thị Trường Hôm Nay</h2>
